@@ -7,4 +7,20 @@
   font-family: "Josefin Sans", sans-serif;
 }
 
+/* Fix para viewport em dispositivos móveis */
+html,
+body {
+  height: 100%;
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Media query para dispositivos móveis */
+@media (max-width: 640px) {
+  body {
+    height: -webkit-fill-available;
+  }
+}
+
 /* Outros estilos personalizados */
