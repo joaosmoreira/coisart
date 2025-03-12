@@ -22,10 +22,3 @@ body {
   overflow: hidden;
   position: fixed;
 }
-
-/* Media queries para telas menores */
-@media (max-width: 640px) {
-  .main-container {
-    padding: 20px;
-  }
-}
