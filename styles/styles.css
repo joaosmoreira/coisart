@@ -11,16 +11,22 @@
 html,
 body {
   height: 100%;
-  position: fixed;
   width: 100%;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
+  position: fixed;
 }
 
-/* Media query para dispositivos móveis */
-@media (max-width: 640px) {
-  body {
-    height: -webkit-fill-available;
-  }
+/* Ajuste para o container */
+.h-screen {
+  height: 100vh; /* Fallback */
+  height: -webkit-fill-available;
+}
+
+/* Garantir margens iguais em todos os lados */
+body > div {
+  box-sizing: border-box;
 }
 
 /* Outros estilos personalizados */
