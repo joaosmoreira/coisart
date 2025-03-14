@@ -1,9 +1,51 @@
 <!doctype html>
 <html lang="pt">
   <head>
-    <!-- Meta Tags-->
+    <!-- Meta Tags Básicas -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="COIS'ART ~ Mercadinho de Arte na Edição Primavera. Visite-nos a 22 de Março das 10h30 às 18h30 para descobrir artesanato local e arte!"
+    />
+    <meta
+      name="keywords"
+      content="mercadinho, arte, artesanato, pintura, cerâmica, música, primavera, eventos locais"
+    />
+
+    <!-- Open Graph Tags (para partilhas em redes sociais) -->
+    <meta
+      property="og:title"
+      content="COIS'ART - Mercadinho de Arte | Edição Primavera"
+    />
+    <meta
+      property="og:description"
+      content="Visite o COIS'ART - Mercadinho de Arte na Edição Primavera. 22 de Março das 10h30 às 18h30."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://coisart.pt/" />
+    <meta
+      property="og:image"
+      content="https://coisart.pt/assets/coisart-preview.jpg"
+    />
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="COIS'ART - Mercadinho de Arte | Edição Primavera"
+    />
+    <meta
+      name="twitter:description"
+      content="Visite o COIS'ART - Mercadinho de Arte na Edição Primavera. 22 de Março das 10h30 às 18h30."
+    />
+    <meta
+      name="twitter:image"
+      content="https://coisart.pt/assets/coisart-preview.jpg"
+    />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://coisart.pt/" />
 
     <!-- Title -->
     <title>COIS'ART</title>
@@ -21,6 +63,35 @@
 
     <!-- Folha de estilo personalizada -->
     <link rel="stylesheet" href="styles/styles.css" />
+
+    <!-- Dados estruturados para evento -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": "COIS'ART - Mercadinho de Arte | Edição Primavera",
+        "startDate": "2025-03-22T10:30",
+        "endDate": "2025-03-22T18:30",
+        "description": "Mercadinho de Arte na Edição Primavera com artesanato local e produtos artísticos.",
+        "location": {
+          "@type": "Place",
+          "name": "Ah Coisas ~ Concept Store",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Praça das Fontaínhas, Loja F",
+            "addressLocality": "Vila das Aves",
+            "postalCode": "4795-021",
+            "addressCountry": "PT"
+          }
+        },
+        "image": "https://coisart.pt/assets/coisart-logo-black.jpg",
+        "organizer": {
+          "@type": "Organization",
+          "name": "COIS'ART",
+          "url": "https://coisart.pt"
+        }
+      }
+    </script>
   </head>
   <body
     class="bg-white flex justify-center items-center min-h-screen overflow-hidden"
