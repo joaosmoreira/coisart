@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --color-rose: #DE7B91;
+  --color-lemon: #F0E6A8;
+  --color-mint: #B8E8C8;
+  --color-sky: #A8D8F0;
+  --color-lavender: #D4B8F0;
+  --color-cream: #FAF8F5;
+  --color-ink: #2D2522;
+
+  --font-display: "Fraunces", serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+}
+
+@layer base {
+  body {
+    background-color: #FAF8F5;
+    color: #2D2522;
+    font-family: var(--font-sans);
+  }
+}
+
+.bg-grid-pattern {
+  background-size: 24px 24px;
+  background-image: radial-gradient(circle, rgba(45, 37, 34, 0.05) 1px, transparent 1px);
+}
