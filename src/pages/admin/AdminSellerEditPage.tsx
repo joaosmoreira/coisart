@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Upload, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Image as ImageIcon, Key, CheckCircle2, X, Mail } from 'lucide-react';
 import { api } from '@/services/apiClient';
 import { slugify } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -18,8 +18,16 @@ export const AdminSellerEditPage: React.FC = () => {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    email: '', password: '', name: '', slug: '', bio: '', avatarUrl: '', instagramUrl: '', isFeatured: false, isActive: true
+    email: '', name: '', slug: '', bio: '', avatarUrl: '', instagramUrl: '', isFeatured: false, isActive: true
   });
+
+  // Estados para o fluxo dedicado de alteração de palavra-passe
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   useEffect(() => {
     api.get<any[]>('/sellers').then(sellers => {
@@ -28,23 +36,12 @@ export const AdminSellerEditPage: React.FC = () => {
         const insta = found.links?.find((l: any) => l.platform === 'Instagram' || l.platform === 'Website')?.url || '';
         setFormData({
           email: found.userId?.email || found.email || '',
-          password: '',
           name: found.name, slug: found.slug, bio: found.bio || '', avatarUrl: found.avatarUrl || '',
           instagramUrl: insta, isFeatured: Boolean(found.isFeatured), isActive: found.isActive !== false
         });
       }
     }).catch(() => setError('Erro ao carregar dados do vendedor.')).finally(() => setLoading(false));
   }, [id]);
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (reader.result) setFormData(prev => ({ ...prev, avatarUrl: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -56,13 +53,43 @@ export const AdminSellerEditPage: React.FC = () => {
     });
   };
 
+  const handleConfirmPasswordChange = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordError('A palavra-passe deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('As palavras-passes inseridas não coincidem.');
+      return;
+    }
+
+    setUpdatingPassword(true);
+    try {
+      await api.put(`/sellers/${id}`, { password: newPassword });
+      setPasswordSuccess('Palavra-passe alterada com sucesso!');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => {
+        setShowPasswordForm(false);
+        setPasswordSuccess('');
+      }, 1800);
+    } catch (err: any) {
+      setPasswordError(err.message || 'Erro ao alterar palavra-passe.');
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setError('');
     try {
       const links = formData.instagramUrl ? [{ platform: 'Instagram', url: formData.instagramUrl }] : [];
       await api.put(`/sellers/${id}`, {
         email: formData.email,
-        password: formData.password || undefined,
         name: formData.name, slug: formData.slug || slugify(formData.name), bio: formData.bio,
         avatarUrl: formData.avatarUrl, links, isFeatured: formData.isFeatured, isActive: formData.isActive
       });
@@ -83,11 +110,97 @@ export const AdminSellerEditPage: React.FC = () => {
       </div>
 
       <Card>
-        {error && <div className="p-3 mb-4 rounded-2xl bg-red-50 text-red-700 text-xs">{error}</div>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="E-mail de Acesso (Login)" name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="artesao@coisart.pt" />
-            <Input label="Nova Palavra-passe (deixar em branco para manter)" name="password" type="password" value={formData.password} onChange={handleChange} placeholder="••••••••" />
+        {error && <div className="p-3 mb-4 rounded-2xl bg-red-50 text-red-700 text-xs font-medium">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-5">
+
+          {/* Secção de Credenciais de Acesso (E-mail + Botão Alterar Palavra-passe) */}
+          <div className="space-y-3">
+            <Input
+              label="E-mail de Acesso (Login)"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              placeholder="artesao@coisart.pt"
+            />
+
+            {!showPasswordForm ? (
+              <div className="flex items-center justify-between p-4 bg-cream/40 rounded-2xl border border-ink/10">
+                <div className="flex items-center gap-2">
+                  <Key className="w-4 h-4 text-rose shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-ink uppercase tracking-wider">Segurança da Conta</p>
+                    <p className="text-xs text-ink/60">Palavra-passe protegida</p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setShowPasswordForm(true); setPasswordError(''); setPasswordSuccess(''); setNewPassword(''); setConfirmPassword(''); }}
+                  className="flex items-center gap-1.5 text-xs rounded-xl border-ink/20 hover:bg-rose/10 hover:text-rose hover:border-rose transition-all"
+                >
+                  <Key className="w-3.5 h-3.5" /> Alterar palavra-passe
+                </Button>
+              </div>
+            ) : (
+              <div className="p-5 bg-cream/60 rounded-2xl border-2 border-rose/30 space-y-4 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b border-ink/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Key className="w-4 h-4 text-rose" />
+                    <h4 className="font-bold text-sm text-ink">Alterar Palavra-passe do Vendedor</h4>
+                  </div>
+                  <button type="button" onClick={() => setShowPasswordForm(false)} className="text-ink/40 hover:text-ink">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {passwordError && <div className="p-2.5 rounded-xl bg-red-100 text-red-700 text-xs font-medium">{passwordError}</div>}
+                {passwordSuccess && (
+                  <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-medium flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> {passwordSuccess}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold uppercase text-ink/70 mb-1 block">Nova Palavra-passe</label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold uppercase text-ink/70 mb-1 block">Confirmar Nova Palavra-passe</label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repita a palavra-passe"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-ink/10">
+                  <Button type="button" variant="outline" size="sm" onClick={() => setShowPasswordForm(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleConfirmPasswordChange}
+                    disabled={updatingPassword}
+                    className="bg-rose text-white hover:bg-rose/90 flex items-center gap-1.5 shadow-md active:scale-95"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {updatingPassword ? 'A atualizar...' : 'Confirmar Nova Palavra-passe'}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <AvatarUploader
