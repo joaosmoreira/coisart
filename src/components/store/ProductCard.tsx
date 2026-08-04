@@ -36,8 +36,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div className="break-inside-avoid mb-6 group cursor-pointer">
       <Link to={`/produto/${product.slug}`} className="block relative overflow-hidden rounded-3xl bg-cream/30 transition-all duration-300">
-        {/* Imagem em dimensão natural para Masonry orgânico */}
-        <ProductImage src={product.images?.[0]} alt={product.title} className="w-full h-auto object-cover rounded-3xl group-hover:scale-105 transition-transform duration-700 ease-out min-h-[200px]" />
+        {/* Imagem com escurecimento elegante no Hover para alta legibilidade do texto */}
+        <ProductImage
+          src={product.images?.[0]}
+          alt={product.title}
+          className="w-full h-auto object-cover rounded-3xl group-hover:scale-105 group-hover:brightness-75 transition-all duration-500 ease-out min-h-[200px]"
+        />
 
         {/* Badges Flutuantes Minimalistas */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
@@ -58,8 +62,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </div>
 
-        {/* Overlay no Hover: Materiais + Breve Descrição + Ação de Ler Mais */}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col justify-end gap-2 text-left">
+        {/* Overlay no Hover: Fundo escuro aveludado + Leve desfocagem para contraste perfeito */}
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/80 to-ink/50 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col justify-end gap-2 text-left">
           {product.materials && (
             <div className="flex items-center gap-1.5 text-lemon text-xs font-semibold">
               <Layers className="w-3.5 h-3.5 shrink-0" />
