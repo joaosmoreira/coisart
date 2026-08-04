@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Save, Plus, X, Search, Store, UserPlus, Check, Image as ImageIcon } from 'lucide-react';
+import { Calendar, Save, X, Search, Store, UserPlus, Check, Image as ImageIcon, Upload, Camera, Trash2 } from 'lucide-react';
 import { api } from '@/services/apiClient';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,10 +26,16 @@ export const AdminEventPage: React.FC = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  // Estado de Pesquisa de Artesãos para Adicionar ao Evento
+  // Estado de Pesquisa de Artesãos
   const [sellerSearch, setSellerSearch] = useState('');
   const [isComboboxOpen, setIsComboboxOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+
+  // Estado do Modal Drag & Drop de Foto do Artesão
+  const [activeModalSeller, setActiveModalSeller] = useState<any>(null);
+  const [promoPhotoInput, setPromoPhotoInput] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navigate = useNavigate();
 
@@ -41,7 +47,6 @@ export const AdminEventPage: React.FC = () => {
       ]);
 
       if (evt) {
-        // Normalizar participatingSellers para o formato { sellerId, promoPhotoUrl }
         const normalizedSellers = (evt.participatingSellers || []).map((item: any) => {
           if (item.sellerId) return item;
           return { sellerId: item, promoPhotoUrl: '' };
@@ -73,7 +78,6 @@ export const AdminEventPage: React.FC = () => {
     setHighlightedIndex(0);
   }, [sellerSearch]);
 
-  // Artesãos filtrados pela pesquisa
   const searchResults = allSellers.filter((s) => {
     const term = sellerSearch.toLowerCase();
     const nameMatch = s.name?.toLowerCase().includes(term);
@@ -81,7 +85,6 @@ export const AdminEventPage: React.FC = () => {
     return nameMatch || emailMatch;
   });
 
-  // Verificar se o artesão já está adicionado na lista do evento
   const isSelected = (sellerId: string) => {
     return eventData.participatingSellers.some((item: any) => {
       const id = item.sellerId?._id || item.sellerId || item._id || item;
@@ -109,17 +112,74 @@ export const AdminEventPage: React.FC = () => {
     }));
   };
 
-  const handleUpdatePromoPhoto = (sellerId: string, url: string) => {
+  const openPhotoModal = (sellerItem: any) => {
+    const sellerObj = sellerItem.sellerId || sellerItem;
+    setActiveModalSeller({
+      id: sellerObj._id || sellerObj,
+      name: sellerObj.name || 'Artesão',
+      avatarUrl: sellerObj.avatarUrl
+    });
+    setPromoPhotoInput(sellerItem.promoPhotoUrl || '');
+  };
+
+  const closePhotoModal = () => {
+    setActiveModalSeller(null);
+    setPromoPhotoInput('');
+    setIsDragging(false);
+  };
+
+  const handleSavePromoPhoto = () => {
+    if (!activeModalSeller) return;
     setEventData((prev: any) => ({
       ...prev,
       participatingSellers: prev.participatingSellers.map((item: any) => {
         const id = item.sellerId?._id || item.sellerId || item._id || item;
-        if (id === sellerId) {
-          return { ...item, promoPhotoUrl: url };
+        if (id === activeModalSeller.id) {
+          return { ...item, promoPhotoUrl: promoPhotoInput };
         }
         return item;
       })
     }));
+    closePhotoModal();
+  };
+
+  // Tratar leitura de Ficheiro de Imagem para DataURL (Drag & Drop)
+  const processImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecione um ficheiro de imagem válido (PNG, JPG, WEBP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setPromoPhotoInput(e.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processImageFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processImageFile(e.target.files[0]);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -175,7 +235,7 @@ export const AdminEventPage: React.FC = () => {
     <div className="space-y-8 max-w-4xl">
       <div>
         <h1 className="font-display text-3xl font-bold text-ink">Gestão da Próxima Feira</h1>
-        <p className="text-sm text-ink/70 mt-1">Altere as informações promocionais e adicione a publicação de cada artesão</p>
+        <p className="text-sm text-ink/70 mt-1">Altere os dados do evento e gira os artesãos que vão estar presentes</p>
       </div>
 
       {message && <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">{message}</div>}
@@ -241,13 +301,13 @@ export const AdminEventPage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Seleção de Artesãos Participantes com Pesquisa por Setas e Fotos de Publicação de Rede Social */}
+        {/* Seleção de Artesãos Participantes em Grelha Limpa + Botão de Foto */}
         <Card className="p-6 bg-white border border-ink/10 shadow-cozy space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ink/10 pb-3">
             <h3 className="font-display text-lg font-bold text-ink flex items-center gap-2">
-              <Store className="w-5 h-5 text-rose" /> Artesãos e Fotos de Publicação do Evento ({eventData.participatingSellers.length})
+              <Store className="w-5 h-5 text-rose" /> Artesãos Presentes nesta Edição ({eventData.participatingSellers.length})
             </h3>
-            <span className="text-xs text-ink/60">Setas ↑↓ e Enter funcionam na pesquisa</span>
+            <span className="text-xs text-ink/60">Pesquise para adicionar artesãos à próxima feira</span>
           </div>
 
           {/* Campo de Pesquisa Inteligente com Navegação por Setas */}
@@ -330,55 +390,62 @@ export const AdminEventPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Lista de Artesãos Confirmados com Input para Foto da Publicação / Grafismo */}
+          {/* Layout Original em Grelha com Ícone para Adicionar Foto Drag & Drop */}
           {eventData.participatingSellers.length === 0 ? (
             <div className="p-6 rounded-2xl bg-cream/40 border border-dashed border-ink/20 text-center text-xs text-ink/50 italic">
               Nenhum artesão selecionado para esta edição. Utilize a caixa de pesquisa acima para adicionar artesãos.
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {eventData.participatingSellers.map((item: any) => {
                 const seller = item.sellerId || item;
                 const sId = seller._id || seller;
+                const hasPromoPhoto = Boolean(item.promoPhotoUrl && item.promoPhotoUrl.trim());
+
                 return (
                   <div
                     key={sId}
-                    className="p-4 rounded-2xl border border-ink/10 bg-cream/30 space-y-3 shadow-sm"
+                    className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 shadow-sm ${
+                      hasPromoPhoto ? 'border-rose/40 bg-rose/5' : 'border-ink/10 bg-cream/30'
+                    }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <ArtistAvatar avatarUrl={seller.avatarUrl} name={seller.name || 'Artesão'} size="sm" />
-                        <div className="min-w-0">
-                          <p className="font-bold text-ink text-sm truncate">{seller.name || 'Artesão'}</p>
-                          <p className="text-[11px] text-ink/60 truncate">{seller.userId?.email || seller.email || ''}</p>
-                        </div>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <ArtistAvatar avatarUrl={seller.avatarUrl} name={seller.name || 'Artesão'} size="sm" />
+                      <div className="min-w-0">
+                        <p className="font-bold text-ink text-sm truncate">{seller.name || 'Artesão'}</p>
+                        <p className="text-[10px] text-ink/50 truncate">
+                          {hasPromoPhoto ? '✓ Foto de publicação adicionada' : (seller.userId?.email || seller.email || '')}
+                        </p>
                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* Botão de Ícone para Adicionar/Editar Foto do Artesão no Evento */}
+                      <button
+                        type="button"
+                        onClick={() => openPhotoModal(item)}
+                        className={`p-2 rounded-xl transition-colors relative ${
+                          hasPromoPhoto
+                            ? 'bg-rose text-white shadow-sm hover:bg-rose/90'
+                            : 'bg-white text-ink/60 hover:text-rose hover:bg-rose/10 border border-ink/10'
+                        }`}
+                        title={hasPromoPhoto ? 'Alterar foto de publicação do evento' : 'Adicionar foto de publicação do evento'}
+                      >
+                        <Camera className="w-4 h-4" />
+                        {hasPromoPhoto && (
+                          <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                        )}
+                      </button>
+
+                      {/* Botão de Remover Artesão do Evento */}
                       <button
                         type="button"
                         onClick={() => handleRemoveSeller(sId)}
-                        className="p-1.5 rounded-xl text-ink/40 hover:text-rose hover:bg-white transition-colors shrink-0"
+                        className="p-2 rounded-xl text-ink/40 hover:text-rose hover:bg-white transition-colors"
                         title="Remover artesão do evento"
                       >
                         <X className="w-4 h-4" />
                       </button>
-                    </div>
-
-                    {/* URL da Foto Promocional / Publicação com Grafismo */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-ink/10">
-                      <div className="flex-1 flex items-center gap-2">
-                        <ImageIcon className="w-4 h-4 text-rose shrink-0" />
-                        <Input
-                          placeholder="URL da Foto de Publicação do Evento (ex: cartaz com grafismo do artesão)..."
-                          value={item.promoPhotoUrl || ''}
-                          onChange={(e) => handleUpdatePromoPhoto(sId, e.target.value)}
-                          className="text-xs"
-                        />
-                      </div>
-                      {item.promoPhotoUrl && (
-                        <div className="w-12 h-12 rounded-xl overflow-hidden border border-rose/30 shrink-0 bg-white">
-                          <img src={item.promoPhotoUrl} alt="Publicação Artesão" className="w-full h-full object-cover" />
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
@@ -399,6 +466,112 @@ export const AdminEventPage: React.FC = () => {
           </Button>
         </div>
       </form>
+
+      {/* Modal Drag & Drop para Adicionar/Alterar Foto de Publicação do Artesão */}
+      {activeModalSeller && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl border border-ink/10 relative animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-4">
+              <div className="flex items-center gap-3">
+                <ArtistAvatar avatarUrl={activeModalSeller.avatarUrl} name={activeModalSeller.name} size="sm" />
+                <div>
+                  <h3 className="font-display text-lg font-bold text-ink">Foto de Publicação do Evento</h3>
+                  <p className="text-xs text-rose font-semibold">{activeModalSeller.name}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closePhotoModal}
+                className="p-2 rounded-2xl hover:bg-cream text-ink/50 hover:text-ink transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Zona de Drag & Drop */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`p-8 rounded-3xl border-2 border-dashed text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-3 ${
+                isDragging
+                  ? 'border-rose bg-rose/10 scale-102'
+                  : promoPhotoInput
+                  ? 'border-emerald-400 bg-emerald-50/50'
+                  : 'border-ink/20 bg-cream/30 hover:border-rose hover:bg-rose/5'
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              {promoPhotoInput ? (
+                <div className="space-y-3 w-full flex flex-col items-center">
+                  <div className="w-40 h-40 rounded-2xl overflow-hidden shadow-md border-2 border-white relative group">
+                    <img src={promoPhotoInput} alt="Pré-visualização" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                      Arraste ou clique para trocar
+                    </div>
+                  </div>
+                  <p className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                    <Check className="w-4 h-4" /> Foto Carregada com Sucesso!
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="w-14 h-14 rounded-2xl bg-rose/10 text-rose flex items-center justify-center">
+                    <Upload className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-ink">Arraste a foto da publicação para aqui</p>
+                    <p className="text-xs text-ink/60 mt-1">ou clique para selecionar do computador (PNG, JPG, WEBP)</p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Input Alternativo para URL da Foto */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-ink/70 uppercase">Ou cole o Link / URL da foto</label>
+              <Input
+                placeholder="https://..."
+                value={promoPhotoInput}
+                onChange={(e) => setPromoPhotoInput(e.target.value)}
+                className="text-xs"
+              />
+            </div>
+
+            {/* Botões de Ação do Modal */}
+            <div className="flex items-center justify-between pt-2 border-t border-ink/10">
+              {promoPhotoInput ? (
+                <button
+                  type="button"
+                  onClick={() => setPromoPhotoInput('')}
+                  className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Remover Foto
+                </button>
+              ) : (
+                <div />
+              )}
+
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={closePhotoModal}>
+                  Cancelar
+                </Button>
+                <Button type="button" size="sm" onClick={handleSavePromoPhoto} className="bg-rose text-white hover:bg-rose/90 font-bold">
+                  Guardar Foto
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
