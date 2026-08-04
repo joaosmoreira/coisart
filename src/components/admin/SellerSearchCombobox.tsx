@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X, Store } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ export const SellerSearchCombobox: React.FC<Props> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
 
   const filtered = sellers.filter((s) => {
     const term = searchTerm.toLowerCase();
@@ -31,6 +32,31 @@ export const SellerSearchCombobox: React.FC<Props> = ({
     return nameMatch || emailMatch || slugMatch || instaMatch;
   });
 
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [searchTerm]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isOpen || filtered.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev < filtered.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : filtered.length - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filtered[highlightedIndex]) {
+        onSelect(filtered[highlightedIndex]);
+        setSearchTerm('');
+        setIsOpen(false);
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+    }
+  };
+
   const getInstaHandle = (seller: any) => {
     const link = seller.links?.find((l: any) => l.platform?.toLowerCase().includes('instagram') || l.url?.includes('instagram.com'));
     if (!link) return '';
@@ -40,7 +66,7 @@ export const SellerSearchCombobox: React.FC<Props> = ({
   return (
     <div className="relative flex flex-col gap-1.5 flex-1">
       <label className="text-xs font-semibold uppercase text-ink/70 flex items-center gap-1.5">
-        <Store className="w-3.5 h-3.5 text-rose" /> Pesquisar Artesão (Nome, E-mail ou Instagram)
+        <Store className="w-3.5 h-3.5 text-rose" /> Pesquisar Artesão (Navegação por Setas ↑↓ & Enter)
       </label>
 
       {selectedSeller ? (
@@ -66,13 +92,14 @@ export const SellerSearchCombobox: React.FC<Props> = ({
       ) : (
         <div className="relative">
           <Input
-            placeholder="Escreva nome (ex: Sofia Pimenta), e-mail ou @instagram..."
+            placeholder="Escreva nome, e-mail ou @instagram (use setas ↑↓ e Enter)..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setIsOpen(true);
             }}
             onFocus={() => setIsOpen(true)}
+            onKeyDown={handleKeyDown}
             className="pr-10"
           />
           <Search className="w-4 h-4 absolute right-3.5 top-3.5 text-ink/40" />
@@ -84,9 +111,10 @@ export const SellerSearchCombobox: React.FC<Props> = ({
                   Nenhum artesão encontrado com "{searchTerm}".
                 </div>
               ) : (
-                filtered.map((s) => {
+                filtered.map((s, idx) => {
                   const insta = getInstaHandle(s);
                   const email = s.userId?.email || s.email || '';
+                  const isHighlighted = idx === highlightedIndex;
                   return (
                     <div
                       key={s._id}
@@ -95,7 +123,10 @@ export const SellerSearchCombobox: React.FC<Props> = ({
                         setSearchTerm('');
                         setIsOpen(false);
                       }}
-                      className="p-3 hover:bg-cream/60 cursor-pointer flex items-center justify-between text-xs transition-colors"
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                      className={`p-3 cursor-pointer flex items-center justify-between text-xs transition-colors ${
+                        isHighlighted ? 'bg-rose/10 font-semibold border-l-4 border-rose' : 'hover:bg-cream/60'
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <ArtistAvatar avatarUrl={s.avatarUrl} name={s.name} size="sm" />
@@ -106,8 +137,10 @@ export const SellerSearchCombobox: React.FC<Props> = ({
                           </p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold text-rose uppercase tracking-wider bg-rose/10 px-2.5 py-1 rounded-full">
-                        Selecionar
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                        isHighlighted ? 'bg-rose text-white' : 'bg-rose/10 text-rose'
+                      }`}>
+                        {isHighlighted ? 'Premir Enter ↵' : 'Selecionar'}
                       </span>
                     </div>
                   );
