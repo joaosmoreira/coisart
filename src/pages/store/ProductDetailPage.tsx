@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, Sparkles, Download, Store, Layers, Share2, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Sparkles, Download, Store, Layers, Share2, ArrowRight, Ban } from 'lucide-react';
 import { api } from '@/services/apiClient';
 import { useCartStore } from '@/store/useCartStore';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,14 @@ export const ProductDetailPage: React.FC = () => {
   const printExtraPrice = product.physicalPrintPrice || 0;
   const finalPrice = product.price + (wantsPhysicalPrint ? printExtraPrice : 0);
 
+  const sellerObj = typeof product.sellerId === 'object' ? product.sellerId : null;
+  const isSellerActive = sellerObj ? sellerObj.isActive !== false : true;
+
   const handleAddToCart = () => {
+    if (!isSellerActive) {
+      alert('A banca deste artesão encontra-se em pausa. Não é possível adicionar artigos ao carrinho de momento.');
+      return;
+    }
     const img = activeImage || (product.images && product.images[0]) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800';
     addItem({
       productId: product._id, sellerId: product.sellerId?._id || product.sellerId,
@@ -147,9 +154,22 @@ export const ProductDetailPage: React.FC = () => {
             </Card>
           )}
 
-          <Button size="lg" onClick={handleAddToCart} className="w-full py-4 text-base font-bold flex items-center justify-center gap-2 rounded-3xl bg-rose hover:bg-rose/90 text-white shadow-lg active:scale-95 transition-all">
-            <ShoppingBag className="w-5 h-5" /> Adicionar ao Carrinho de Compras (€{finalPrice.toFixed(2)})
-          </Button>
+          {!isSellerActive && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center gap-2">
+              <Ban className="w-4 h-4 text-rose shrink-0" />
+              <span>A banca deste artesão encontra-se em pausa. Os seus artigos estão em modo exposição e indisponíveis para compra.</span>
+            </div>
+          )}
+
+          {isSellerActive ? (
+            <Button size="lg" onClick={handleAddToCart} className="w-full py-4 text-base font-bold flex items-center justify-center gap-2 rounded-3xl bg-rose hover:bg-rose/90 text-white shadow-lg active:scale-95 transition-all">
+              <ShoppingBag className="w-5 h-5" /> Adicionar ao Carrinho de Compras (€{finalPrice.toFixed(2)})
+            </Button>
+          ) : (
+            <Button disabled className="w-full py-4 text-base font-bold flex items-center justify-center gap-2 rounded-3xl bg-cream border border-ink/15 text-ink/40 cursor-not-allowed select-none line-through">
+              <Ban className="w-5 h-5 text-rose" /> Indisponível para Compra (Artesão em Pausa)
+            </Button>
+          )}
         </div>
       </div>
     </div>

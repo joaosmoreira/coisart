@@ -47,3 +47,57 @@ export const createCategory = async (req: AuthenticatedRequest, res: Response): 
     res.status(500).json({ error: 'Erro ao criar categoria.' });
   }
 };
+
+export const updateCategory = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { name, slug } = req.body;
+
+    const category = await Category.findById(id);
+    if (!category) {
+      res.status(404).json({ error: 'Categoria não encontrada.' });
+      return;
+    }
+
+    if (slug) {
+      const existing = await Category.findOne({ slug: slug.toLowerCase(), _id: { $ne: id } });
+      if (existing) {
+        res.status(400).json({ error: 'Já existe outra categoria com este slug.' });
+        return;
+      }
+      category.slug = slug.toLowerCase();
+    }
+
+    if (name) {
+      category.name = name;
+    }
+
+    await category.save();
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao atualizar categoria.' });
+  }
+};
+
+export const deleteCategory = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const category = await Category.findById(id);
+
+    if (!category) {
+      res.status(404).json({ error: 'Categoria não encontrada.' });
+      return;
+    }
+
+    const productCount = await Product.countDocuments({ categoryId: id });
+    if (productCount > 0) {
+      res.status(400).json({ error: `Não é possível eliminar: existem ${productCount} artigos associados a esta categoria.` });
+      return;
+    }
+
+    await Category.findByIdAndDelete(id);
+    res.json({ message: 'Categoria eliminada com sucesso.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao eliminar categoria.' });
+  }
+};

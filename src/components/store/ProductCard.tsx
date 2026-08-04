@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Sparkles, Download, Layers, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Sparkles, Download, Layers, ArrowRight, Ban } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { ArtistAvatar } from '@/components/shared/ArtistAvatar';
 import { ProductImage } from '@/components/shared/ProductImage';
@@ -12,8 +12,15 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const addItem = useCartStore((state) => state.addItem);
 
+  const sellerObj = typeof product.sellerId === 'object' ? product.sellerId : null;
+  const isSellerActive = sellerObj ? sellerObj.isActive !== false : true;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
+    if (!isSellerActive) {
+      alert('A banca deste artesão encontra-se em pausa. Não é possível adicionar artigos ao carrinho de momento.');
+      return;
+    }
     const image = product.images && product.images.length > 0 ? product.images[0] : '';
     addItem({
       productId: product._id, sellerId: product.sellerId?._id || product.sellerId,
@@ -26,8 +33,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const isUnique = product.type === 'physical_unique';
   const isDigital = product.type === 'digital';
 
-  const sellerObj = typeof product.sellerId === 'object' ? product.sellerId : null;
-
   return (
     <div className="break-inside-avoid mb-6 group cursor-pointer">
       <Link to={`/produto/${product.slug}`} className="block relative overflow-hidden rounded-3xl bg-cream/30 transition-all duration-300">
@@ -36,6 +41,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Badges Flutuantes Minimalistas */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+          {!isSellerActive && (
+            <span className="px-3 py-1 rounded-full bg-amber-100/95 backdrop-blur-md text-amber-900 text-[10px] font-bold tracking-wide shadow-sm flex items-center gap-1">
+              <Ban className="w-3 h-3 text-rose" /> Artesão em Pausa
+            </span>
+          )}
           {isUnique && (
             <span className="px-3 py-1 rounded-full bg-rose/95 backdrop-blur-md text-white text-[10px] font-bold tracking-wide shadow-sm flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> Peça Única
@@ -65,14 +75,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/20 mt-1">
             <span className="text-[11px] font-bold text-lemon flex items-center gap-1 group-hover:underline">
-              Clique para ler mais <ArrowRight className="w-3 h-3" />
+              Clique para ver artigo <ArrowRight className="w-3 h-3" />
             </span>
-            <button
-              onClick={handleAddToCart}
-              className="px-3 py-1.5 rounded-xl bg-white text-ink font-bold text-xs hover:bg-lemon transition-colors flex items-center gap-1 shadow-md active:scale-95 shrink-0"
-            >
-              <ShoppingBag className="w-3.5 h-3.5 text-rose" /> Comprar
-            </button>
+            {isSellerActive ? (
+              <button
+                onClick={handleAddToCart}
+                className="px-3 py-1.5 rounded-xl bg-white text-ink font-bold text-xs hover:bg-lemon transition-colors flex items-center gap-1 shadow-md active:scale-95 shrink-0"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-rose" /> Comprar
+              </button>
+            ) : (
+              <span
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                className="px-2.5 py-1 rounded-xl bg-white/30 text-white/80 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-sm select-none cursor-not-allowed line-through shrink-0"
+              >
+                <Ban className="w-3 h-3 text-rose shrink-0" /> Pausado
+              </span>
+            )}
           </div>
         </div>
       </Link>

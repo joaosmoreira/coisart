@@ -42,7 +42,7 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
     }
 
     const products = await Product.find(filter)
-      .populate('sellerId', 'name slug avatarUrl bio')
+      .populate('sellerId', 'name slug avatarUrl bio isActive')
       .populate('categoryId', 'name slug')
       .sort({ createdAt: -1 });
 
@@ -59,7 +59,7 @@ export const getProductBySlug = async (req: Request, res: Response): Promise<voi
     const query = isId ? { $or: [{ slug: param.toLowerCase() }, { _id: param }] } : { slug: param.toLowerCase() };
 
     const product = await Product.findOne(query)
-      .populate('sellerId', 'name slug avatarUrl bio links')
+      .populate('sellerId', 'name slug avatarUrl bio links isActive')
       .populate('categoryId', 'name slug');
 
     if (!product) {
