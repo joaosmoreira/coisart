@@ -1,11 +1,27 @@
 import { Request, Response } from 'express';
 import { Category } from '../models/Category.js';
+import { Product } from '../models/Product.js';
 import { AuthenticatedRequest } from '../types/index.js';
 
 export const getCategories = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
-    res.json(categories);
+    const categories = await Category.find().sort({ name: 1 }).lean();
+
+    const categoriesWithCounts = await Promise.all(
+      categories.map(async (cat) => {
+        const productCount = await Product.countDocuments({
+          categoryId: cat._id,
+          isActive: true,
+          stock: { $gt: 0 }
+        });
+        return {
+          ...cat,
+          productCount
+        };
+      })
+    );
+
+    res.json(categoriesWithCounts);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao listar categorias.' });
   }

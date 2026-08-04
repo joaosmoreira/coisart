@@ -74,7 +74,12 @@ export const seedDatabase = async () => {
     Category.create({ name: 'Alfarrabista / Livros', slug: 'livros' }),
     Category.create({ name: 'Marcenaria', slug: 'marcenaria' }),
     Category.create({ name: 'Instrumentos Musicais', slug: 'instrumentos-musicais' }),
-    Category.create({ name: 'Figures', slug: 'figures' })
+    Category.create({ name: 'Bijuteria & Joalharia', slug: 'bijuteria' }),
+    Category.create({ name: 'Macramé & Crochet', slug: 'macrame' }),
+    Category.create({ name: 'Papelaria Personalizada', slug: 'papelaria' }),
+    Category.create({ name: 'Desenho & Retrato', slug: 'desenho' }),
+    Category.create({ name: 'Fotografia (Sem artigos)', slug: 'fotografia' }),
+    Category.create({ name: 'Vidro & Arte Tridimensional (Sem artigos)', slug: 'vidro-escultura' })
   ]);
 
   const artistsData = [
