@@ -39,8 +39,28 @@ export const SellerDetailPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  if (loading) return <LoadingSkeleton />;
   if (!seller) return <div className="p-12 text-center font-bold text-ink">Banca não encontrada.</div>;
+
+  if (seller.isActive === false) {
+    return (
+      <div className="max-w-2xl mx-auto py-20 px-4 text-center space-y-6">
+        <div className="w-16 h-16 rounded-full bg-rose/10 text-rose flex items-center justify-center mx-auto">
+          <Store className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="font-display text-3xl font-bold text-ink">Banca Temporariamente Indisponível</h2>
+          <p className="text-base text-ink/70 max-w-md mx-auto">
+            A banca de <strong>{seller.name}</strong> encontra-se em pausa no momento. Explore outros artesãos disponíveis no nosso mercado.
+          </p>
+        </div>
+        <Link to="/artesaos" className="inline-block pt-2">
+          <Button variant="primary" className="rounded-full px-8 py-3">
+            Ver Outros Artesãos do Mercado
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 space-y-10">
