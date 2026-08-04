@@ -101,4 +101,7 @@ MONGODB_URI="mongodb+srv://UTILIZADOR:PALAVRA_PASSE@SEU_CLUSTER.mongodb.net/cois
 ---
 
 ## 📝 Licença
-Desenvolvido para demonstração e prestação de serviços comerciais no âmbito da plataforma **Coisart**.
+
+**Proprietária e Confidencial** — Copyright © 2026 João Moreira. Todos os Direitos Reservados.
+
+É estritamente proibida qualquer cópia, reprodução, redistribuição ou reutilização comercial deste código-fonte sem autorização expressa por escrito do titular dos direitos de autor.
