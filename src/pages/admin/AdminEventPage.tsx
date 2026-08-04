@@ -78,6 +78,17 @@ export const AdminEventPage: React.FC = () => {
     setHighlightedIndex(0);
   }, [sellerSearch]);
 
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    if (isComboboxOpen && itemRefs.current[highlightedIndex]) {
+      itemRefs.current[highlightedIndex]?.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      });
+    }
+  }, [highlightedIndex, isComboboxOpen]);
+
   const searchResults = allSellers.filter((s) => {
     const term = sellerSearch.toLowerCase();
     const nameMatch = s.name?.toLowerCase().includes(term);
@@ -353,6 +364,7 @@ export const AdminEventPage: React.FC = () => {
                       return (
                         <div
                           key={s._id}
+                          ref={(el) => (itemRefs.current[idx] = el)}
                           onClick={() => !alreadyAdded && handleAddSeller(s)}
                           onMouseEnter={() => setHighlightedIndex(idx)}
                           className={`p-3 flex items-center justify-between text-xs transition-colors ${

@@ -63,6 +63,17 @@ export const SellerSearchCombobox: React.FC<Props> = ({
     return link.url.replace(/https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '');
   };
 
+  const itemRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    if (isOpen && itemRefs.current[highlightedIndex]) {
+      itemRefs.current[highlightedIndex]?.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      });
+    }
+  }, [highlightedIndex, isOpen]);
+
   return (
     <div className="relative flex flex-col gap-1.5 flex-1">
       <label className="text-xs font-semibold uppercase text-ink/70 flex items-center gap-1.5">
@@ -118,6 +129,7 @@ export const SellerSearchCombobox: React.FC<Props> = ({
                   return (
                     <div
                       key={s._id}
+                      ref={(el) => (itemRefs.current[idx] = el)}
                       onClick={() => {
                         onSelect(s);
                         setSearchTerm('');

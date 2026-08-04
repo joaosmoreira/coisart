@@ -48,6 +48,17 @@ export const CustomerSearchCombobox: React.FC<Props> = ({ customers, selectedCus
     }
   };
 
+  const itemRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    if (isOpen && itemRefs.current[highlightedIndex]) {
+      itemRefs.current[highlightedIndex]?.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      });
+    }
+  }, [highlightedIndex, isOpen]);
+
   return (
     <div className="relative flex flex-col gap-1.5">
       <label className="text-xs font-semibold uppercase text-ink/70">
@@ -91,6 +102,7 @@ export const CustomerSearchCombobox: React.FC<Props> = ({ customers, selectedCus
                   return (
                     <div
                       key={c.email}
+                      ref={(el) => (itemRefs.current[idx] = el)}
                       onClick={() => { onSelect(c); setSearchTerm(''); setIsOpen(false); }}
                       onMouseEnter={() => setHighlightedIndex(idx)}
                       className={`p-3 cursor-pointer flex items-center justify-between text-xs transition-colors ${

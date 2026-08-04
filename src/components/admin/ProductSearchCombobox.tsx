@@ -46,6 +46,17 @@ export const ProductSearchCombobox: React.FC<Props> = ({ products, onAddProduct 
     }
   };
 
+  const itemRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    if (isOpen && itemRefs.current[highlightedIndex]) {
+      itemRefs.current[highlightedIndex]?.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      });
+    }
+  }, [highlightedIndex, isOpen]);
+
   return (
     <div className="relative flex flex-col gap-1.5">
       <label className="text-xs font-semibold uppercase text-ink/70 flex items-center justify-between">
@@ -76,6 +87,7 @@ export const ProductSearchCombobox: React.FC<Props> = ({ products, onAddProduct 
                 return (
                   <div
                     key={p._id}
+                    ref={(el) => (itemRefs.current[idx] = el)}
                     onClick={() => {
                       onAddProduct(p);
                       setSearchTerm('');
