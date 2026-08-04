@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Users, FolderTree, ShoppingBag, UserCheck, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Users, FolderTree, ShoppingBag, UserCheck, LogOut, Calendar } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,8 @@ export const AdminLayout: React.FC = () => {
     ...(user?.role === 'admin'
       ? [
           { label: 'Vendedores', to: '/admin/vendedores', icon: Users },
-          { label: 'Categorias', to: '/admin/categorias', icon: FolderTree }
+          { label: 'Categorias', to: '/admin/categorias', icon: FolderTree },
+          { label: 'Próxima Feira', to: '/admin/evento', icon: Calendar }
         ]
       : []),
     { label: 'Clientes', to: '/admin/clientes', icon: UserCheck },

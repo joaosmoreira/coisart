@@ -10,6 +10,7 @@ import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
+import eventRoutes from './routes/eventRoutes.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/event', eventRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', app: 'Coisart API', timestamp: new Date() });

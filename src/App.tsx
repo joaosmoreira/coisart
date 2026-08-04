@@ -10,6 +10,7 @@ import { ProductDetailPage } from '@/pages/store/ProductDetailPage';
 import { SellerDetailPage } from '@/pages/store/SellerDetailPage';
 import { CartPage } from '@/pages/store/CartPage';
 import { OrderSuccessPage } from '@/pages/store/OrderSuccessPage';
+import { EventPage } from '@/pages/store/EventPage';
 
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
@@ -27,6 +28,7 @@ import { AdminCustomerEditPage } from '@/pages/admin/AdminCustomerEditPage';
 import { AdminCustomerDetailPage } from '@/pages/admin/AdminCustomerDetailPage';
 import { AdminOrdersPage } from '@/pages/admin/AdminOrdersPage';
 import { AdminOrderCreatePage } from '@/pages/admin/AdminOrderCreatePage';
+import { AdminEventPage } from '@/pages/admin/AdminEventPage';
 
 const StoreLayout: React.FC = () => (
   <div className="min-h-screen flex flex-col bg-background font-sans text-ink antialiased">
@@ -57,6 +59,7 @@ export const App: React.FC = () => {
         {/* Rotas Públicas da Loja Coisart */}
         <Route element={<StoreLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/proxima-feira" element={<EventPage />} />
           <Route path="/artesaos" element={<ArtistsPage />} />
           <Route path="/loja" element={<ShopPage />} />
           <Route path="/produto/:slug" element={<ProductDetailPage />} />
@@ -76,6 +79,7 @@ export const App: React.FC = () => {
           <Route path="vendedores/novo" element={<AdminOnlyRoute><AdminSellerCreatePage /></AdminOnlyRoute>} />
           <Route path="vendedores/editar/:id" element={<AdminOnlyRoute><AdminSellerEditPage /></AdminOnlyRoute>} />
           <Route path="categorias" element={<AdminOnlyRoute><AdminCategoriesPage /></AdminOnlyRoute>} />
+          <Route path="evento" element={<AdminOnlyRoute><AdminEventPage /></AdminOnlyRoute>} />
           <Route path="clientes" element={<AdminCustomersPage />} />
           <Route path="clientes/novo" element={<AdminCustomerCreatePage />} />
           <Route path="clientes/editar/:email" element={<AdminCustomerEditPage />} />

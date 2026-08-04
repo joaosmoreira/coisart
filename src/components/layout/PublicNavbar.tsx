@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { ShoppingBag, Store, UserCheck } from 'lucide-react';
+import { ShoppingBag, Store, UserCheck, Calendar, Paintbrush } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { Badge } from '@/components/ui/badge';
 
@@ -23,15 +23,14 @@ export const PublicNavbar: React.FC = () => {
         {/* Links Principais */}
         <nav className="hidden md:flex items-center gap-8">
           <NavLink
-            to="/"
-            end
+            to="/proxima-feira"
             className={({ isActive }) =>
-              `text-sm font-semibold transition-colors ${
+              `text-sm font-semibold transition-colors flex items-center gap-1.5 ${
                 isActive ? 'text-rose font-bold' : 'text-ink/80 hover:text-ink'
               }`
             }
           >
-            Início
+            <Calendar className="w-4 h-4 text-rose" /> Próxima Feira
           </NavLink>
           <NavLink
             to="/artesaos"
@@ -41,7 +40,7 @@ export const PublicNavbar: React.FC = () => {
               }`
             }
           >
-            Artesãos
+            <Paintbrush className="w-4 h-4 text-mint" /> Artesãos
           </NavLink>
           <NavLink
             to="/loja"
@@ -51,7 +50,7 @@ export const PublicNavbar: React.FC = () => {
               }`
             }
           >
-            <Store className="w-4 h-4" /> Mercado Artesanal
+            <Store className="w-4 h-4 text-rose" /> Mercado
           </NavLink>
           <NavLink
             to="/admin"

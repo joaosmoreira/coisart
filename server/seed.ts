@@ -6,6 +6,7 @@ import { Seller } from './models/Seller.js';
 import { Category } from './models/Category.js';
 import { Product } from './models/Product.js';
 import { Order } from './models/Order.js';
+import { Event } from './models/Event.js';
 
 dotenv.config();
 const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/coisart';
@@ -71,7 +72,7 @@ export const seedDatabase = async () => {
     }
   });
 
-  await Promise.all([User.deleteMany({}), Seller.deleteMany({}), Category.deleteMany({}), Product.deleteMany({}), Order.deleteMany({})]);
+  await Promise.all([User.deleteMany({}), Seller.deleteMany({}), Category.deleteMany({}), Product.deleteMany({}), Order.deleteMany({}), Event.deleteMany({})]);
   const defaultPasswordHash = await bcrypt.hash('Coisart#123', 10);
 
   await User.create({ email: 'admin@coisart.pt', passwordHash: defaultPasswordHash, role: 'admin' });
@@ -180,9 +181,19 @@ export const seedDatabase = async () => {
 
   // Encomendas de Teste
   await Order.create({ customerEmail: 'mariana.silva@exemplo.pt', customerName: 'Mariana Silva', customerPhone: '912 345 678', customerNif: '234567890', customerAddress: { street: 'Rua de Santa Catarina, nº 120', city: 'Porto', postalCode: '4000-442', country: 'Portugal' }, deliveryMethod: 'cafe_pickup', items: [{ productId: createdProducts[0]._id, sellerId: createdProducts[0].sellerId, title: createdProducts[0].title, price: createdProducts[0].price, quantity: 1, type: createdProducts[0].type }], totalAmount: createdProducts[0].price, paymentStatus: 'completed' });
-  await Order.create({ customerEmail: 'beatriz.lopes@exemplo.pt', customerName: 'Beatriz Lopes', customerPhone: '918 273 645', customerNif: '289012345', customerAddress: { street: 'Rua das Flores, nº 42', city: 'Porto', postalCode: '4000-123', country: 'Portugal' }, deliveryMethod: 'shipping', shippingAddress: { street: 'Rua das Flores, nº 42', city: 'Porto', postalCode: '4000-123', country: 'Portugal' }, items: [{ productId: createdProducts[1]._id, sellerId: createdProducts[1].sellerId, title: createdProducts[1].title, price: createdProducts[1].price, quantity: 1, type: createdProducts[1].type }], totalAmount: createdProducts[1].price, paymentStatus: 'pending' });
+  // Evento / Próxima Feira de Teste
+  await Event.create({
+    title: 'Feira Coisart — Edição de Primavera 2026',
+    date: 'Sábado e Domingo, 16 & 17 de Maio de 2026',
+    time: '10:00 - 19:00',
+    location: 'Praça das Fontaínhas, Loja F (Ah Coisas ~ Concept Store), Vila das Aves',
+    bannerUrl: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200',
+    description: `Acompanhe a próxima edição física da Feira Coisart! Um fim de semana dedicado à celebração do artesanato contemporâneo, da pintura de autor, da cerâmica e das artes manuais. Venha conhecer de perto as peças únicas, conversar com os artesãos e vivenciar workshops ao vivo no espaço da Ah Coisas ~ Concept Store.`,
+    participatingSellers: sellers.slice(0, 6).map((s) => ({ sellerId: s._id, promoPhotoUrl: '' })),
+    isActive: true
+  });
 
-  console.log(`[Seed] Concluído com SUCESSO! 80 artigos com materiais, descrições ricas e slugs perfeitamente coincidentes no MongoDB Community.`);
+  console.log(`[Seed] Concluído com SUCESSO! 80 artigos, evento da próxima feira e dados semeados.`);
   await mongoose.disconnect();
 };
 
