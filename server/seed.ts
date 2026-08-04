@@ -61,11 +61,12 @@ export const seedDatabase = async () => {
   console.log(`[Seed] Conectando ao MongoDB Community (${mongoURI})...`);
   await mongoose.connect(mongoURI);
 
-  // PRESERVAÇÃO DE AVATARES DE ARTESÃOS EXISTENTES
+  // PRESERVAÇÃO DE AVATARES ADICIONADOS PELO UTILIZADOR
   const existingSellers = await Seller.find().lean();
   const avatarMap: Record<string, string> = {};
   existingSellers.forEach((s) => {
-    if (s.slug && s.avatarUrl && s.avatarUrl.trim()) {
+    // Apenas preserva avatares que NÃO sejam links automáticos do unsplash
+    if (s.slug && s.avatarUrl && s.avatarUrl.trim() && !s.avatarUrl.includes('images.unsplash.com')) {
       avatarMap[s.slug] = s.avatarUrl;
     }
   });
@@ -90,34 +91,6 @@ export const seedDatabase = async () => {
     Category.create({ name: 'Fotografia (Sem artigos)', slug: 'fotografia' }),
     Category.create({ name: 'Vidro & Arte Tridimensional (Sem artigos)', slug: 'vidro-escultura' })
   ]);
-
-  const defaultAvatars: Record<string, string> = {
-    'sofia-pimenta': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500',
-    'joao-costa': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500',
-    'olga': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500',
-    'aurora': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500',
-    'mafalda-ribeiro': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500',
-    'daniela-fernandes': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500',
-    'beatriz-rodrigues': 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500',
-    'filipa-martins': 'https://images.unsplash.com/photo-1548142813-c348350df52b?w=500',
-    'jessica-costa': 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=500',
-    'catia-machado': 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=500',
-    'dora-calcada': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500',
-    'joana-ferreira': 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=500',
-    'filipa-oliveira': 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=500',
-    'jose-neto': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500',
-    'ju-moura': 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=500',
-    'lilia-coutinho': 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=500',
-    'matilde-marques': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=500',
-    'francisco-lima': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500',
-    'rafaela': 'https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?w=500',
-    'fabio-ribeiro': 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=500',
-    'rita-carvalho': 'https://images.unsplash.com/photo-1534751516642-a171e2614927?w=500',
-    'filipa-sobral': 'https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?w=500',
-    'macedo': 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=500',
-    'raquel-silva': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500',
-    'daniela-martins': 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=500'
-  };
 
   const artistsData = [
     { name: 'Sofia Pimenta', slug: 'sofia-pimenta', email: 'sofia.pimenta@coisart.pt', disciplines: ['Bijuteria', 'Pintura'], instagram: ['black.obsidian.art'], bio: 'Exploradora de formas e texturas, combina a sensibilidade da pintura com a delicadeza de peças de bijuteria inspiradas pela pedra obsidiana e tonalidades orgânicas.' },
@@ -156,9 +129,8 @@ export const seedDatabase = async () => {
       url: `https://instagram.com/${handle.replace(/^@/, '')}`
     }));
 
-    // Se já existia uma foto guardada no banco pelo utilizador, preserva-a! Caso contrário, usa a foto padrão.
-    const preservedAvatar = avatarMap[a.slug];
-    const finalAvatarUrl = (preservedAvatar && preservedAvatar.trim()) ? preservedAvatar : (defaultAvatars[a.slug] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500');
+    // Se o utilizador já tiver adicionado uma foto real na base de dados, ela é mantida. Caso contrário, fica vazia ('') para exibir o ícone predefinido!
+    const finalAvatarUrl = avatarMap[a.slug] || '';
 
     const seller = await Seller.create({
       userId: user._id,
