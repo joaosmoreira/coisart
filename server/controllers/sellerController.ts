@@ -11,7 +11,7 @@ export const getSellers = async (req: Request, res: Response): Promise<void> => 
     const filter: Record<string, unknown> = {};
     if (isFeatured === 'true') filter.isFeatured = true;
 
-    const sellers = await Seller.find(filter).sort({ name: 1 });
+    const sellers = await Seller.find(filter).populate('userId', 'email role').sort({ name: 1 });
     res.json(sellers);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao listar os vendedores.' });
@@ -21,7 +21,7 @@ export const getSellers = async (req: Request, res: Response): Promise<void> => 
 export const getSellerBySlug = async (req: Request, res: Response): Promise<void> => {
   try {
     const { slug } = req.params;
-    const seller = await Seller.findOne({ slug: slug.toLowerCase() });
+    const seller = await Seller.findOne({ slug: slug.toLowerCase() }).populate('userId', 'email role');
 
     if (!seller) {
       res.status(404).json({ error: 'Vendedor não encontrado.' });
@@ -69,7 +69,8 @@ export const createSeller = async (req: AuthenticatedRequest, res: Response): Pr
       isActive: true
     });
 
-    res.status(201).json({ seller, user: { id: user._id, email: user.email, role: user.role } });
+    const populatedSeller = await Seller.findById(seller._id).populate('userId', 'email role');
+    res.status(201).json({ seller: populatedSeller, user: { id: user._id, email: user.email, role: user.role } });
   } catch (error) {
     res.status(500).json({ error: 'Erro interno ao criar conta de vendedor.' });
   }
@@ -90,7 +91,27 @@ export const updateSeller = async (req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
-    const { name, slug, bio, avatarUrl, links, disciplines, isFeatured, isActive } = req.body;
+    const { name, slug, bio, avatarUrl, links, disciplines, isFeatured, isActive, email, password } = req.body;
+
+    // Atualizar E-mail ou Password na conta de Utilizador associada
+    if (seller.userId) {
+      const user = await User.findById(seller.userId);
+      if (user) {
+        if (email && email.toLowerCase() !== user.email) {
+          const emailExists = await User.findOne({ email: email.toLowerCase(), _id: { $ne: user._id } });
+          if (emailExists) {
+            res.status(400).json({ error: 'Já existe outra conta com este e-mail.' });
+            return;
+          }
+          user.email = email.toLowerCase();
+        }
+        if (password && password.trim() !== '') {
+          user.passwordHash = await bcrypt.hash(password, 10);
+        }
+        await user.save();
+      }
+    }
+
     if (name) seller.name = name;
     if (slug) seller.slug = slug.toLowerCase();
     if (bio !== undefined) seller.bio = bio;
@@ -101,7 +122,9 @@ export const updateSeller = async (req: AuthenticatedRequest, res: Response): Pr
     if (isActive !== undefined && req.user?.role === 'admin') seller.isActive = isActive;
 
     await seller.save();
-    res.json(seller);
+
+    const updatedSeller = await Seller.findById(seller._id).populate('userId', 'email role');
+    res.json(updatedSeller);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao atualizar dados do vendedor.' });
   }

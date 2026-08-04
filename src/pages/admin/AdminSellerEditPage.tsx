@@ -18,7 +18,7 @@ export const AdminSellerEditPage: React.FC = () => {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    name: '', slug: '', bio: '', avatarUrl: '', instagramUrl: '', isFeatured: false, isActive: true
+    email: '', password: '', name: '', slug: '', bio: '', avatarUrl: '', instagramUrl: '', isFeatured: false, isActive: true
   });
 
   useEffect(() => {
@@ -27,6 +27,8 @@ export const AdminSellerEditPage: React.FC = () => {
       if (found) {
         const insta = found.links?.find((l: any) => l.platform === 'Instagram' || l.platform === 'Website')?.url || '';
         setFormData({
+          email: found.userId?.email || found.email || '',
+          password: '',
           name: found.name, slug: found.slug, bio: found.bio || '', avatarUrl: found.avatarUrl || '',
           instagramUrl: insta, isFeatured: Boolean(found.isFeatured), isActive: found.isActive !== false
         });
@@ -59,6 +61,8 @@ export const AdminSellerEditPage: React.FC = () => {
     try {
       const links = formData.instagramUrl ? [{ platform: 'Instagram', url: formData.instagramUrl }] : [];
       await api.put(`/sellers/${id}`, {
+        email: formData.email,
+        password: formData.password || undefined,
         name: formData.name, slug: formData.slug || slugify(formData.name), bio: formData.bio,
         avatarUrl: formData.avatarUrl, links, isFeatured: formData.isFeatured, isActive: formData.isActive
       });
@@ -74,13 +78,18 @@ export const AdminSellerEditPage: React.FC = () => {
         <Button variant="outline" size="sm" onClick={() => navigate('/admin/vendedores')} className="p-2"><ArrowLeft className="w-4 h-4" /></Button>
         <div>
           <h1 className="font-display text-3xl font-bold text-ink">Editar Vendedor / Artesão</h1>
-          <p className="text-sm text-ink/70">Atualize foto de perfil, dados da banca e estado da conta</p>
+          <p className="text-sm text-ink/70">Atualize foto de perfil, credenciais de login e dados da banca</p>
         </div>
       </div>
 
       <Card>
         {error && <div className="p-3 mb-4 rounded-2xl bg-red-50 text-red-700 text-xs">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="E-mail de Acesso (Login)" name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="artesao@coisart.pt" />
+            <Input label="Nova Palavra-passe (deixar em branco para manter)" name="password" type="password" value={formData.password} onChange={handleChange} placeholder="••••••••" />
+          </div>
+
           <AvatarUploader
             avatarUrl={formData.avatarUrl}
             name={formData.name || 'Artesão'}

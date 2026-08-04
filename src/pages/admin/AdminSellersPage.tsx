@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, UserPlus, Star, Edit3, Power, Search, Sparkles, X, AlertCircle } from 'lucide-react';
+import { Users, UserPlus, Star, Edit3, Power, Search, Sparkles, X, AlertCircle, Mail } from 'lucide-react';
 import { api } from '@/services/apiClient';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,7 @@ export const AdminSellersPage: React.FC = () => {
       (s) =>
         s.name.toLowerCase().includes(query) ||
         s.slug.toLowerCase().includes(query) ||
+        (s.userId?.email && s.userId.email.toLowerCase().includes(query)) ||
         (Array.isArray(s.disciplines) && s.disciplines.some((d: string) => d.toLowerCase().includes(query)))
     );
   }, [sellers, searchQuery]);
@@ -182,6 +183,10 @@ export const AdminSellersPage: React.FC = () => {
                       <div>
                         <h3 className="font-bold text-ink text-base">{seller.name}</h3>
                         <p className="text-xs text-ink/60">/banca/{seller.slug}</p>
+                        <p className="text-xs text-rose font-medium flex items-center gap-1 mt-0.5">
+                          <Mail className="w-3 h-3 shrink-0" />
+                          {seller.userId?.email || seller.email || 'Sem e-mail'}
+                        </p>
                       </div>
                     </div>
                     <Badge variant={isActive ? 'mint' : 'rose'}>
