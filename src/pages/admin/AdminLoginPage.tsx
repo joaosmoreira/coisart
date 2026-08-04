@@ -75,30 +75,10 @@ export const AdminLoginPage: React.FC = () => {
           </Button>
         </form>
 
-        <div className="mt-8 pt-4 border-t border-ink/10 text-center text-xs text-ink/60 space-y-2">
-          <p className="font-semibold text-ink/80">Credenciais de Teste Rápidas (Clique para preencher):</p>
-          <div className="flex flex-col gap-1.5 items-center">
-            <button
-              type="button"
-              onClick={() => { setEmail('admin@coisart.pt'); setPassword('Coisart#123'); }}
-              className="px-3 py-1.5 rounded-xl bg-cream hover:bg-lemon/50 border border-ink/10 transition-colors flex items-center gap-2 text-xs"
-            >
-              <span>🔑 Admin:</span>
-              <code className="font-bold text-ink">admin@coisart.pt</code>
-              <span className="text-ink/40">•</span>
-              <code className="font-bold text-rose">Coisart#123</code>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setEmail('joao.costa@coisart.pt'); setPassword('Coisart#123'); }}
-              className="px-3 py-1.5 rounded-xl bg-cream hover:bg-lemon/50 border border-ink/10 transition-colors flex items-center gap-2 text-xs"
-            >
-              <span>🎨 Vendedor:</span>
-              <code className="font-bold text-ink">joao.costa@coisart.pt</code>
-              <span className="text-ink/40">•</span>
-              <code className="font-bold text-rose">Coisart#123</code>
-            </button>
-          </div>
+        <div className="mt-8 pt-4 border-t border-ink/10 text-center text-xs text-ink/50">
+          <p className="font-semibold text-ink/70 mb-1">Credenciais de Teste Rápidas:</p>
+          <p>Admin: <code className="bg-cream px-1 rounded">admin@coisart.pt</code> / <code className="bg-cream px-1 rounded">Coisart#123</code></p>
+          <p>Vendedor João Costa: <code className="bg-cream px-1 rounded">joao.costa@coisart.pt</code> / <code className="bg-cream px-1 rounded">Coisart#123</code></p>
         </div>
       </Card>
     </div>
