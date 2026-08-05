@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ImageUploader } from '@/components/admin/ImageUploader';
 import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
+import { SellerSearchCombobox } from '@/components/admin/SellerSearchCombobox';
 
 export const AdminProductEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +66,7 @@ export const AdminProductEditPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); if (!id) return; setSaving(true); setError('');
     if (user?.role === 'admin' && !formData.sellerId) {
-      setError('Por favor selecione o artesão / vendedor proprietário do artigo.');
+      setError('Por favor pesquise e selecione o artesão / vendedor proprietário do artigo.');
       setSaving(false);
       return;
     }
@@ -82,6 +83,8 @@ export const AdminProductEditPage: React.FC = () => {
 
   if (loading) return <LoadingSkeleton />;
 
+  const selectedSellerObj = sellers.find(s => s._id === formData.sellerId) || null;
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
@@ -95,26 +98,15 @@ export const AdminProductEditPage: React.FC = () => {
       <Card>
         {error && <div className="p-3 mb-4 rounded-2xl bg-red-50 text-red-700 text-xs font-semibold">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Seletor Obrigatorio de Artesao para Administradores */}
+          {/* Pesquisa Interactiva por Setas de Artesao para Administradores */}
           {user?.role === 'admin' && (
-            <div className="flex flex-col gap-1.5 p-4 rounded-2xl bg-amber-50/70 border border-amber-200 shadow-sm">
-              <label className="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
-                <Store className="w-4 h-4 text-rose" /> Artesão / Banca Vendedora (Obrigatório para Admin)
-              </label>
-              <select
-                name="sellerId"
-                value={formData.sellerId}
-                onChange={handleChange}
-                className="h-11 px-4 rounded-xl border border-ink/15 text-sm bg-white font-bold text-ink focus:ring-2 focus:ring-rose outline-none"
-                required
-              >
-                <option value="">-- Selecione o Artesão / Vendedor --</option>
-                {sellers.map((s) => (
-                  <option key={s._id} value={s._id}>
-                    {s.name} ({s.userId?.email || s.email || 'Sem e-mail'})
-                  </option>
-                ))}
-              </select>
+            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 shadow-sm">
+              <SellerSearchCombobox
+                sellers={sellers}
+                selectedSeller={selectedSellerObj}
+                onSelect={(seller) => setFormData(prev => ({ ...prev, sellerId: seller._id }))}
+                onClear={() => setFormData(prev => ({ ...prev, sellerId: '' }))}
+              />
             </div>
           )}
 
