@@ -1,20 +1,54 @@
 import { Request, Response } from 'express';
 import { Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
+import { User } from '../models/User.js';
 import { AuthenticatedRequest } from '../types/index.js';
 
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { customerEmail, customerName, customerPhone, customerNif, customerAddress, deliveryMethod, shippingAddress, items, paymentStatus } = req.body;
+    const {
+      customerEmail,
+      customerName,
+      customerPhone,
+      customerNif,
+      customerAddress,
+      deliveryMethod,
+      separateShipping,
+      recipientDetails,
+      shippingAddress,
+      items,
+      paymentMethod,
+      mbwayPhone,
+      notes,
+      createAccount,
+      password
+    } = req.body;
 
     if (!customerEmail || !customerName || !customerPhone || !deliveryMethod || !items || !Array.isArray(items) || items.length === 0) {
       res.status(400).json({ error: 'Nome, E-mail e Telefone são de preenchimento obrigatório.' });
       return;
     }
 
+    if (paymentMethod === 'mbway' && !mbwayPhone) {
+      res.status(400).json({ error: 'Por favor introduza o número de telemóvel associado ao MB WAY.' });
+      return;
+    }
+
     if (deliveryMethod === 'shipping' && (!shippingAddress || !shippingAddress.street || !shippingAddress.city)) {
       res.status(400).json({ error: 'Endereço de envio (Rua e Cidade) obrigatório para entrega CTT / Transportadora.' });
       return;
+    }
+
+    // Criar Conta Automática se Solicitado
+    if (createAccount && password) {
+      const existingUser = await User.findOne({ email: customerEmail.toLowerCase() });
+      if (!existingUser) {
+        await User.create({
+          email: customerEmail.toLowerCase(),
+          password,
+          role: 'customer'
+        });
+      }
     }
 
     let totalAmount = 0;
@@ -36,23 +70,36 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
         title: product.title,
         price: product.price,
         quantity: item.quantity || 1,
-        type: product.type
+        type: product.type,
+        isPhysicalPrint: Boolean(item.isPhysicalPrint)
       });
     }
 
-    const finalAddress = shippingAddress || customerAddress;
+    const finalShippingAddress = separateShipping ? shippingAddress : customerAddress;
+
+    // Gerar Entidade e Referência Multibanco IfthenPay simulada se selecionado
+    const multibancoEntity = '21523';
+    const rawRef = Math.floor(100000000 + Math.random() * 900000000).toString();
+    const multibancoReference = `${rawRef.substring(0, 3)} ${rawRef.substring(3, 6)} ${rawRef.substring(6, 9)}`;
 
     const order = await Order.create({
       customerEmail,
       customerName,
       customerPhone: customerPhone || '',
       customerNif: customerNif || '',
-      customerAddress: finalAddress,
+      customerAddress,
       deliveryMethod,
-      shippingAddress: deliveryMethod === 'shipping' ? finalAddress : undefined,
+      separateShipping: Boolean(separateShipping),
+      recipientDetails: separateShipping ? recipientDetails : undefined,
+      shippingAddress: finalShippingAddress,
       items: validatedItems,
       totalAmount,
-      paymentStatus: paymentStatus || 'completed'
+      paymentMethod: paymentMethod || 'multibanco',
+      mbwayPhone: mbwayPhone || '',
+      multibancoEntity,
+      multibancoReference,
+      notes: notes || '',
+      paymentStatus: paymentMethod === 'paypal' ? 'completed' : 'pending'
     });
 
     res.status(201).json(order);

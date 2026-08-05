@@ -26,6 +26,25 @@ const ShippingAddressSchema = new Schema(
   { _id: false }
 );
 
+const BillingAddressSchema = new Schema(
+  {
+    name: { type: String, default: '' },
+    nif: { type: String, default: '' },
+    street: { type: String, default: '' },
+    city: { type: String, default: '' },
+    postalCode: { type: String, default: '' }
+  },
+  { _id: false }
+);
+
+const RecipientDetailsSchema = new Schema(
+  {
+    name: { type: String, default: '' },
+    phone: { type: String, default: '' }
+  },
+  { _id: false }
+);
+
 const OrderSchema: Schema = new Schema(
   {
     customerEmail: { type: String, required: true, lowercase: true, trim: true },
@@ -38,13 +57,26 @@ const OrderSchema: Schema = new Schema(
       enum: ['digital', 'fair_pickup', 'cafe_pickup', 'shipping'],
       required: true
     },
+    separateShipping: { type: Boolean, default: false },
+    recipientDetails: { type: RecipientDetailsSchema },
     shippingAddress: { type: ShippingAddressSchema },
+    separateBilling: { type: Boolean, default: false },
+    billingDetails: { type: BillingAddressSchema },
     items: [OrderItemSchema],
     totalAmount: { type: Number, required: true, min: 0 },
+    paymentMethod: {
+      type: String,
+      enum: ['multibanco', 'bank_transfer', 'mbway', 'paypal'],
+      default: 'multibanco'
+    },
+    mbwayPhone: { type: String, default: '' },
+    multibancoEntity: { type: String, default: '21523' },
+    multibancoReference: { type: String, default: '' },
+    notes: { type: String, default: '' },
     paymentStatus: {
       type: String,
       enum: ['pending', 'completed', 'failed', 'cancelled'],
-      default: 'completed'
+      default: 'pending'
     },
     isResend: { type: Boolean, default: false },
     resendReason: { type: String, default: '' }

@@ -1,142 +1,167 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShoppingBag, Trash2, ArrowLeft, MapPin, CheckCircle, Download, Truck, Coffee } from 'lucide-react';
-import { useCartStore, SHIPPING_FEE_PER_SELLER } from '@/store/useCartStore';
-import { api } from '@/services/apiClient';
+import { ShoppingBag, Trash2, ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useCartStore } from '@/store/useCartStore';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/EmptyState';
 
 export const CartPage: React.FC = () => {
   const navigate = useNavigate();
-  const { items, removeItem, updateQuantity, clearCart, getSubtotal, getShippingFee, getTotalAmount, getUniquePhysicalSellersCount } = useCartStore();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { items, removeItem, updateQuantity, getSubtotal } = useCartStore();
 
-  const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', nif: '',
-    deliveryMethod: 'cafe_pickup', street: '', city: '', postalCode: ''
-  });
-
-  const hasDigitalPrint = items.some(i => i.isPhysicalPrint);
-  const sellersCount = getUniquePhysicalSellersCount();
-  const shippingFee = getShippingFee(formData.deliveryMethod);
-  const subtotal = getSubtotal();
-  const totalAmount = getTotalAmount(formData.deliveryMethod);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleCheckout = async (e: React.FormEvent) => {
-    e.preventDefault(); if (items.length === 0) return;
-    setLoading(true); setError('');
-    try {
-      const addrObj = { street: formData.street, city: formData.city, postalCode: formData.postalCode, country: 'Portugal' };
-      const orderPayload = {
-        customerName: formData.name, customerEmail: formData.email, customerPhone: formData.phone, customerNif: formData.nif,
-        deliveryMethod: formData.deliveryMethod, paymentStatus: 'pending', customerAddress: addrObj,
-        shippingAddress: formData.deliveryMethod === 'shipping' ? addrObj : undefined,
-        totalAmount,
-        items: items.map(i => ({ productId: i.productId, sellerId: i.sellerId, title: i.title, price: i.price, quantity: i.quantity, type: i.type, isPhysicalPrint: i.isPhysicalPrint }))
-      };
-      const res = await api.post<any>('/orders', orderPayload);
-      clearCart(); navigate(`/sucesso/${res._id}`);
-    } catch (err: any) { setError(err.message || 'Erro ao finalizar encomenda.'); } finally { setLoading(false); }
-  };
+  const subtotalWithVat = getSubtotal(); // Total com IVA 23% incluído
+  const basePriceWithoutVat = subtotalWithVat / 1.23; // Preço sem IVA
+  const vatAmount = subtotalWithVat - basePriceWithoutVat; // Valor do IVA
 
   if (items.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16">
-        <EmptyState icon={ShoppingBag} title="O seu carrinho está vazio" description="Adicione peças artesanais únicas do nosso mercado para continuar." />
-        <div className="text-center mt-6"><Link to="/loja"><Button variant="primary">Ir para o Mercado Artesanal</Button></Link></div>
+        <EmptyState
+          icon={ShoppingBag}
+          title="O seu carrinho está vazio"
+          description="Adicione peças artesanais únicas do nosso mercado para continuar."
+        />
+        <div className="text-center mt-6">
+          <Link to="/loja">
+            <Button variant="primary" className="rounded-2xl">Ir para o Mercado Artesanal</Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 space-y-8">
-      <div className="flex items-center gap-4">
-        <Link to="/loja"><Button variant="outline" size="sm" className="p-2"><ArrowLeft className="w-4 h-4" /></Button></Link>
-        <h1 className="font-display text-3xl font-bold text-ink">Carrinho & Checkout</h1>
-      </div>
-
-      {error && <div className="p-4 rounded-2xl bg-red-50 text-red-700 text-sm">{error}</div>}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-2 space-y-4">
-          <Card className="p-6 divide-y divide-ink/10 space-y-4">
-            {items.map((item) => (
-              <div key={item.productId} className="pt-4 first:pt-0 flex items-center justify-between gap-4">
-                <img src={item.image} alt={item.title} className="w-20 h-20 rounded-2xl object-cover border border-ink/10" />
-                <div className="flex-1 space-y-1">
-                  <p className="text-[11px] font-bold uppercase text-rose">{item.sellerName}</p>
-                  <h3 className="font-bold text-ink text-base">{item.title}</h3>
-                  <p className="text-xs font-bold text-ink/70">
-                    €{(item.price + (item.isPhysicalPrint ? (item.physicalPrintPrice || 0) : 0)).toFixed(2)} cada
-                    {item.isPhysicalPrint && <span className="text-[10px] text-rose font-semibold block">⚡ Digital + 🖼️ Impressão Física</span>}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {item.type === 'physical_unique' ? <span className="text-xs font-bold text-ink/60 bg-cream px-3 py-1.5 rounded-xl border">1 Unid</span> : <input type="number" min="1" max={item.stock} value={item.quantity} onChange={(e) => updateQuantity(item.productId, Number(e.target.value))} className="w-16 h-9 px-2 text-center rounded-xl border border-ink/20 font-bold text-sm" />}
-                  <button onClick={() => removeItem(item.productId)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"><Trash2 className="w-4 h-4" /></button>
-                </div>
-              </div>
-            ))}
-          </Card>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+      {/* Cabeçalho da Página */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link to="/loja">
+            <Button variant="outline" size="sm" className="p-2 rounded-xl">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="font-display text-3xl font-bold text-ink">Carrinho de Compras</h1>
+            <p className="text-xs text-ink/60">Reveja os artigos selecionados e os valores com e sem IVA</p>
+          </div>
         </div>
 
-        <Card className="p-6 space-y-6">
-          <h2 className="font-display text-xl font-bold text-ink border-b border-ink/10 pb-3">Finalizar Encomenda</h2>
-          <form onSubmit={handleCheckout} className="space-y-4">
-            <Input label="Nome Completo *" name="name" value={formData.name} onChange={handleChange} required placeholder="ex: Ana Rita" />
-            <Input label="E-mail *" name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="ana@exemplo.pt" />
-            <div className="grid grid-cols-2 gap-3">
-              <Input label="Telefone *" name="phone" value={formData.phone} onChange={handleChange} required placeholder="912 345 678" />
-              <Input label="NIF (Opcional)" name="nif" value={formData.nif} onChange={handleChange} placeholder="234567890" />
-            </div>
+        <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-rose/10 text-rose border border-rose/20">
+          {items.reduce((sum, i) => sum + i.quantity, 0)} {items.length === 1 ? 'artigo' : 'artigos'} no carrinho
+        </span>
+      </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-ink/70">Método de Entrega</label>
-              <select name="deliveryMethod" value={formData.deliveryMethod} onChange={handleChange} className="w-full h-11 px-4 rounded-2xl border border-ink/15 text-xs bg-white font-medium">
-                <option value="cafe_pickup">☕ Levantamento na Ah Coisas (Vila das Aves) — GRÁTIS</option>
-                <option value="fair_pickup">🎪 Levantamento na Feira Mensal — GRÁTIS</option>
-                <option value="shipping">📦 Envio CTT / Transportadora (€{SHIPPING_FEE_PER_SELLER.toFixed(2)} por artesão)</option>
-              </select>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Lista de Artigos no Carrinho */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card className="p-4 sm:p-6 divide-y divide-ink/10 space-y-4 bg-white border border-ink/10 shadow-cozy rounded-3xl">
+            {items.map((item) => {
+              const itemUnitPrice = item.price + (item.isPhysicalPrint ? (item.physicalPrintPrice || 0) : 0);
+              const itemTotal = itemUnitPrice * item.quantity;
+              const itemBase = itemTotal / 1.23;
+              const itemVat = itemTotal - itemBase;
 
-            {formData.deliveryMethod === 'shipping' && (
-              <div className="space-y-3 p-3.5 bg-cream/60 rounded-2xl border border-ink/10">
-                <div className="flex items-center justify-between text-xs font-bold text-ink">
-                  <span className="flex items-center gap-1.5"><Truck className="w-4 h-4 text-rose" /> Portes CTT ({sellersCount} Artesãos)</span>
-                  <span>€{shippingFee.toFixed(2)}</span>
+              return (
+                <div key={item.productId} className="pt-4 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <img src={item.image} alt={item.title} className="w-20 h-20 rounded-2xl object-cover border border-ink/10 shrink-0" />
+                    <div className="space-y-1 min-w-0">
+                      <p className="text-[11px] font-bold uppercase text-rose tracking-wider">{item.sellerName}</p>
+                      <h3 className="font-bold text-ink text-base truncate">{item.title}</h3>
+                      <p className="text-xs text-ink/70 font-medium">
+                        Preço Unid. com IVA: <strong className="text-ink">€{itemUnitPrice.toFixed(2)}</strong>
+                        {item.isPhysicalPrint && (
+                          <span className="text-[10px] text-rose font-bold block mt-0.5">⚡ Digital + 🖼️ Impressão Física</span>
+                        )}
+                      </p>
+                      <p className="text-[11px] text-ink/50">
+                        Base sem IVA: €{(itemBase / item.quantity).toFixed(2)} | IVA (23%): €{(itemVat / item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-ink/5">
+                    {item.type === 'physical_unique' ? (
+                      <span className="text-xs font-bold text-ink/60 bg-cream px-3 py-1.5 rounded-xl border border-ink/10">
+                        Peça Única (1 un)
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-ink/60">Qtd:</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max={item.stock}
+                          value={item.quantity}
+                          onChange={(e) => updateQuantity(item.productId, Number(e.target.value))}
+                          className="w-16 h-9 px-2 text-center rounded-xl border border-ink/20 font-bold text-sm bg-white"
+                        />
+                      </div>
+                    )}
+
+                    <div className="text-right">
+                      <p className="font-bold text-ink text-base">€{itemTotal.toFixed(2)}</p>
+                      <p className="text-[10px] text-ink/50">com IVA 23%</p>
+                    </div>
+
+                    <button
+                      onClick={() => removeItem(item.productId)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                      title="Remover do Carrinho"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <Input label="Rua *" name="street" value={formData.street} onChange={handleChange} required placeholder="Rua Central, nº 10" />
-                <div className="grid grid-cols-2 gap-2">
-                  <Input label="Cidade *" name="city" value={formData.city} onChange={handleChange} required placeholder="Porto" />
-                  <Input label="Cód. Postal *" name="postalCode" value={formData.postalCode} onChange={handleChange} required placeholder="4000-100" />
-                </div>
-              </div>
-            )}
+              );
+            })}
+          </Card>
 
-            {formData.deliveryMethod !== 'shipping' && (
-              <div className="p-3 bg-mint/20 rounded-2xl border border-mint/40 text-xs text-ink/80 flex items-center gap-2">
-                <Coffee className="w-4 h-4 text-mint shrink-0" />
-                <span>Ao levantar no ponto parceiro em Vila das Aves ou na Feira Mensal, <strong>economiza €{ (sellersCount * SHIPPING_FEE_PER_SELLER).toFixed(2) } em portes</strong>!</span>
-              </div>
-            )}
+          <div className="p-4 bg-cream/60 rounded-3xl border border-ink/10 flex items-center justify-between text-xs text-ink/70">
+            <span className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Todos os preços apresentados incluem IVA à taxa legal em vigor (23%).
+            </span>
+            <Link to="/loja" className="font-bold text-rose hover:underline">
+              + Adicionar mais artigos
+            </Link>
+          </div>
+        </div>
 
-            <div className="pt-4 border-t border-ink/10 space-y-1.5">
-              <div className="flex justify-between text-xs text-ink/70"><span>Subtotal dos Artigos</span><span>€{subtotal.toFixed(2)}</span></div>
-              <div className="flex justify-between text-xs text-ink/70"><span>Portes de Envio</span><span>{shippingFee > 0 ? `€${shippingFee.toFixed(2)}` : 'GRÁTIS'}</span></div>
-              <div className="flex justify-between items-center text-lg font-bold text-ink pt-2 border-t"><span>Total Final</span><span className="font-display text-2xl font-bold text-ink">€{totalAmount.toFixed(2)}</span></div>
+        {/* Resumo com Discriminacao de IVA e Botao Finalizar Encomenda */}
+        <Card className="p-6 space-y-6 bg-white border border-ink/10 shadow-cozy rounded-3xl sticky top-24">
+          <h2 className="font-display text-xl font-bold text-ink border-b border-ink/10 pb-3">Resumo da Compra</h2>
+
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between text-ink/70">
+              <span>Subtotal (Sem IVA / Base)</span>
+              <span className="font-mono font-semibold">€{basePriceWithoutVat.toFixed(2)}</span>
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full py-3.5 bg-rose hover:bg-rose/90 text-white font-bold rounded-2xl flex items-center justify-center gap-2">
-              <CheckCircle className="w-5 h-5" /> {loading ? 'A processar...' : `Confirmar Encomenda (€${totalAmount.toFixed(2)})`}
-            </Button>
-          </form>
+            <div className="flex justify-between text-ink/70">
+              <span>Imposto IVA (23% incluído)</span>
+              <span className="font-mono font-semibold text-rose">€{vatAmount.toFixed(2)}</span>
+            </div>
+
+            <div className="pt-3 border-t border-ink/10 flex justify-between items-end">
+              <div>
+                <p className="text-xs uppercase font-bold text-ink/50 tracking-wider">Total com IVA</p>
+                <p className="text-[10px] text-ink/40">Antes dos portes de envio</p>
+              </div>
+              <span className="font-display text-3xl font-bold text-ink">€{subtotalWithVat.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => navigate('/checkout')}
+            className="w-full py-4 bg-rose hover:bg-rose/90 text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base shadow-md active:scale-95 transition-all"
+          >
+            Finalizar Encomenda <ArrowRight className="w-5 h-5" />
+          </Button>
+
+          <p className="text-[11px] text-center text-ink/50 leading-relaxed">
+            No passo seguinte irá introduzir os dados de entrega, faturação, escolher o método de pagamento e aplicar cupões.
+          </p>
         </Card>
       </div>
     </div>

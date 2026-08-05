@@ -9,6 +9,7 @@ import { ArtistsPage } from '@/pages/store/ArtistsPage';
 import { ProductDetailPage } from '@/pages/store/ProductDetailPage';
 import { SellerDetailPage } from '@/pages/store/SellerDetailPage';
 import { CartPage } from '@/pages/store/CartPage';
+import { CheckoutPage } from '@/pages/store/CheckoutPage';
 import { OrderSuccessPage } from '@/pages/store/OrderSuccessPage';
 import { EventPage } from '@/pages/store/EventPage';
 
@@ -65,6 +66,8 @@ export const App: React.FC = () => {
           <Route path="/produto/:slug" element={<ProductDetailPage />} />
           <Route path="/banca/:slug" element={<SellerDetailPage />} />
           <Route path="/carrinho" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/encomenda-confirmada/:id" element={<OrderSuccessPage />} />
           <Route path="/sucesso/:id" element={<OrderSuccessPage />} />
         </Route>
 
