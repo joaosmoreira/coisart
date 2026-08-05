@@ -204,50 +204,90 @@ export const AdminProductsPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <table className="w-full text-left text-sm text-ink">
-                <thead className="bg-white uppercase text-[10px] tracking-wider font-semibold text-ink/50 border-b border-ink/10">
-                  <tr>
-                    <th className="p-3 pl-4">Artigo</th>
-                    <th className="p-3">Tipo</th>
-                    <th className="p-3">Preço</th>
-                    <th className="p-3">Stock</th>
-                    <th className="p-3 text-right pr-4">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink/10 bg-white">
-                  {g.items.map((p) => {
-                    const b = getBadge(p.type);
-                    return (
-                      <tr key={p._id} className="hover:bg-cream/30 transition-colors">
-                        <td className="p-3 pl-4 flex items-center gap-3">
-                          <ProductImage src={p.images?.[0]} alt={p.title} className="w-10 h-10 rounded-xl object-cover border border-ink/10" />
-                          <div>
-                            <p className="font-semibold text-ink text-sm">{p.title}</p>
-                            <p className="text-[11px] text-ink/50">{p.categoryId?.name || 'Sem Categoria'}</p>
+
+              {/* 1. VISUALIZAÇÃO EM CARTÕES MOBILE (< md) */}
+              <div className="md:hidden divide-y divide-ink/10 bg-white">
+                {g.items.map((p) => {
+                  const b = getBadge(p.type);
+                  return (
+                    <div key={p._id} className="p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <ProductImage src={p.images?.[0]} alt={p.title} className="w-14 h-14 rounded-2xl object-cover border border-ink/10 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-ink text-sm truncate">{p.title}</h4>
+                          <p className="text-xs text-ink/60">{p.categoryId?.name || 'Sem Categoria'}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant={b.variant}>{b.label}</Badge>
+                            <span className="text-xs font-semibold text-ink/70">{p.stock} un. em stock</span>
                           </div>
-                        </td>
-                        <td className="p-3">
-                          <Badge variant={b.variant}>{b.label}</Badge>
-                        </td>
-                        <td className="p-3 font-bold text-ink">€{p.price.toFixed(2)}</td>
-                        <td className="p-3 font-semibold text-xs">{p.stock} un.</td>
-                        <td className="p-3 pr-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Link to={`/admin/produtos/editar/${p._id}`}>
-                              <Button size="sm" variant="outline" className="p-1.5">
-                                <Edit className="w-3.5 h-3.5 text-ink/70" />
-                              </Button>
-                            </Link>
-                            <Button size="sm" variant="outline" onClick={() => handleDelete(p._id)} className="p-1.5 text-red-500 hover:bg-red-50">
-                              <Trash2 className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-ink/5">
+                        <span className="font-bold text-ink text-base">€{p.price.toFixed(2)}</span>
+                        <div className="flex items-center gap-2">
+                          <Link to={`/admin/produtos/editar/${p._id}`}>
+                            <Button size="sm" variant="outline" className="h-8 text-xs gap-1">
+                              <Edit className="w-3.5 h-3.5" /> Editar
                             </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </Link>
+                          <Button size="sm" variant="outline" onClick={() => handleDelete(p._id)} className="h-8 text-xs text-red-500 hover:bg-red-50">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 2. VISUALIZAÇÃO EM TABELA DESKTOP / TABLET (>= md) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-sm text-ink min-w-[600px]">
+                  <thead className="bg-white uppercase text-[10px] tracking-wider font-semibold text-ink/50 border-b border-ink/10">
+                    <tr>
+                      <th className="p-3 pl-4">Artigo</th>
+                      <th className="p-3">Tipo</th>
+                      <th className="p-3">Preço</th>
+                      <th className="p-3">Stock</th>
+                      <th className="p-3 text-right pr-4">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink/10 bg-white">
+                    {g.items.map((p) => {
+                      const b = getBadge(p.type);
+                      return (
+                        <tr key={p._id} className="hover:bg-cream/30 transition-colors">
+                          <td className="p-3 pl-4 flex items-center gap-3">
+                            <ProductImage src={p.images?.[0]} alt={p.title} className="w-10 h-10 rounded-xl object-cover border border-ink/10" />
+                            <div>
+                              <p className="font-semibold text-ink text-sm">{p.title}</p>
+                              <p className="text-[11px] text-ink/50">{p.categoryId?.name || 'Sem Categoria'}</p>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <Badge variant={b.variant}>{b.label}</Badge>
+                          </td>
+                          <td className="p-3 font-bold text-ink">€{p.price.toFixed(2)}</td>
+                          <td className="p-3 font-semibold text-xs">{p.stock} un.</td>
+                          <td className="p-3 pr-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Link to={`/admin/produtos/editar/${p._id}`}>
+                                <Button size="sm" variant="outline" className="p-1.5">
+                                  <Edit className="w-3.5 h-3.5 text-ink/70" />
+                                </Button>
+                              </Link>
+                              <Button size="sm" variant="outline" onClick={() => handleDelete(p._id)} className="p-1.5 text-red-500 hover:bg-red-50">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </Card>
           ))}
         </div>
