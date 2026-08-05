@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Users, ShoppingBag, PlusCircle, ExternalLink } from 'lucide-react';
+import { Package, Users, ShoppingBag, PlusCircle, ExternalLink, FolderTree, Calendar, UserCheck, Grid } from 'lucide-react';
 import { api } from '@/services/apiClient';
 import { useAuthStore } from '@/store/useAuthStore';
 import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
@@ -63,6 +63,82 @@ export const AdminDashboardPage: React.FC = () => {
             <Button variant="primary" size="sm" className="flex items-center gap-2">
               <PlusCircle className="w-4 h-4" /> Novo Artigo
             </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Grelha de Aplicações / Ícones de Módulos (Estilo Smartphone / Ecrã Principal) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs uppercase font-bold tracking-wider text-rose flex items-center gap-1.5">
+            <Grid className="w-4 h-4" /> Aplicações & Módulos do Backoffice
+          </h2>
+          <span className="text-[11px] text-ink/50 font-medium">Acesso rápido</span>
+        </div>
+
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+          <Link
+            to="/admin/produtos"
+            className="p-4 rounded-3xl bg-white border border-ink/10 shadow-cozy hover:shadow-xl hover:border-rose/40 hover:-translate-y-1 transition-all flex flex-col items-center text-center gap-2 group"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-rose/10 text-rose flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Package className="w-6 h-6" />
+            </div>
+            <span className="text-xs font-bold text-ink">Produtos</span>
+          </Link>
+
+          {user?.role === 'admin' && (
+            <>
+              <Link
+                to="/admin/vendedores"
+                className="p-4 rounded-3xl bg-white border border-ink/10 shadow-cozy hover:shadow-xl hover:border-lemon/60 hover:-translate-y-1 transition-all flex flex-col items-center text-center gap-2 group"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Users className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-bold text-ink">Vendedores</span>
+              </Link>
+
+              <Link
+                to="/admin/categorias"
+                className="p-4 rounded-3xl bg-white border border-ink/10 shadow-cozy hover:shadow-xl hover:border-mint/60 hover:-translate-y-1 transition-all flex flex-col items-center text-center gap-2 group"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FolderTree className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-bold text-ink">Categorias</span>
+              </Link>
+
+              <Link
+                to="/admin/evento"
+                className="p-4 rounded-3xl bg-white border border-ink/10 shadow-cozy hover:shadow-xl hover:border-rose/40 hover:-translate-y-1 transition-all flex flex-col items-center text-center gap-2 group"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-rose/10 text-rose flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Calendar className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-bold text-ink">Próxima Feira</span>
+              </Link>
+            </>
+          )}
+
+          <Link
+            to="/admin/clientes"
+            className="p-4 rounded-3xl bg-white border border-ink/10 shadow-cozy hover:shadow-xl hover:border-sky/60 hover:-translate-y-1 transition-all flex flex-col items-center text-center gap-2 group"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <UserCheck className="w-6 h-6" />
+            </div>
+            <span className="text-xs font-bold text-ink">Clientes</span>
+          </Link>
+
+          <Link
+            to="/admin/encomendas"
+            className="p-4 rounded-3xl bg-white border border-ink/10 shadow-cozy hover:shadow-xl hover:border-purple/60 hover:-translate-y-1 transition-all flex flex-col items-center text-center gap-2 group"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <ShoppingBag className="w-6 h-6" />
+            </div>
+            <span className="text-xs font-bold text-ink">Encomendas</span>
           </Link>
         </div>
       </div>
