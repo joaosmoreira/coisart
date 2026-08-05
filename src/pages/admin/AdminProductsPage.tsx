@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Package, Store, Filter, Search, Tag } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Search, Tag, ExternalLink, AlertTriangle } from 'lucide-react';
 import { api } from '@/services/apiClient';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,10 @@ export const AdminProductsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Estado para Modal de Confirmação de Eliminação
+  const [productToDelete, setProductToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -57,13 +61,17 @@ export const AdminProductsPage: React.FC = () => {
     loadData();
   }, [user]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem a certeza que deseja desativar este artigo?')) return;
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete) return;
+    setDeleting(true);
     try {
-      await api.delete(`/products/${id}`);
+      await api.delete(`/products/${productToDelete._id}`);
+      setProductToDelete(null);
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Erro ao desativar.');
+      alert(err.message || 'Erro ao desativar artigo.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -225,15 +233,30 @@ export const AdminProductsPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-3 border-t border-ink/10">
+                      <div className="flex items-center justify-between pt-3 border-t border-ink/10 flex-wrap gap-2">
                         <span className="font-bold text-ink text-lg">€{p.price.toFixed(2)}</span>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* Botão Ver Artigo (Link para a página pública em Tom Pastel) */}
+                          <Link to={`/artigo/${p.slug}`} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" variant="outline" className="h-8 px-2.5 text-xs gap-1 font-bold rounded-xl bg-sky-100 border border-sky-300 text-sky-950 hover:bg-sky-200 shadow-sm flex items-center">
+                              <ExternalLink className="w-3.5 h-3.5 text-sky-700" /> Ver Artigo
+                            </Button>
+                          </Link>
+
+                          {/* Botão Editar */}
                           <Link to={`/admin/produtos/editar/${p._id}`}>
-                            <Button size="sm" variant="outline" className="h-8 px-2.5 text-xs gap-1 font-bold rounded-xl">
+                            <Button size="sm" variant="outline" className="h-8 px-2 text-xs gap-1 font-bold rounded-xl">
                               <Edit className="w-3.5 h-3.5" /> Editar
                             </Button>
                           </Link>
-                          <Button size="sm" variant="outline" onClick={() => handleDelete(p._id)} className="h-8 px-2.5 text-xs text-red-500 hover:bg-red-50 font-bold rounded-xl">
+
+                          {/* Botão Eliminar com Confirmação */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setProductToDelete(p)}
+                            className="h-8 px-2 text-xs text-red-500 hover:bg-red-50 font-bold rounded-xl"
+                          >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -244,6 +267,49 @@ export const AdminProductsPage: React.FC = () => {
               </div>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Modal de Segurança para Confirmação de Eliminação de Artigo */}
+      {productToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl border border-ink/10 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-red-600 border-b border-ink/10 pb-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-100 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-bold text-ink">Confirmar Eliminação</h3>
+                <p className="text-xs text-ink/60">Segurança do Backoffice</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm text-ink/80 bg-cream/40 p-4 rounded-2xl border border-ink/5">
+              <p>Tem a certeza que deseja eliminar / desativar o artigo:</p>
+              <p className="font-bold text-ink text-base">"{productToDelete.title}"</p>
+              <p className="text-xs text-ink/60">Esta ação irá remover o produto do mercado público e da lista de vendas.</p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setProductToDelete(null)}
+                disabled={deleting}
+                className="rounded-xl text-xs font-bold"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmDeleteProduct}
+                disabled={deleting}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl flex items-center gap-1.5 text-xs"
+              >
+                <Trash2 className="w-4 h-4" /> {deleting ? 'A eliminar...' : 'Sim, Eliminar Artigo'}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
