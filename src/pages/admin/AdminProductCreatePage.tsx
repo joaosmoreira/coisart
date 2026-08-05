@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Store } from 'lucide-react';
 import { api } from '@/services/apiClient';
 import { useAuthStore } from '@/store/useAuthStore';
 import { slugify } from '@/lib/utils';
@@ -28,7 +28,12 @@ export const AdminProductCreatePage: React.FC = () => {
       setCategories(data);
       if (data.length > 0) setFormData(prev => ({ ...prev, categoryId: data[0]._id }));
     });
-    if (user?.role === 'admin') api.get<any[]>('/sellers').then(setSellers);
+    if (user?.role === 'admin') {
+      api.get<any[]>('/sellers').then(data => {
+        setSellers(data);
+        if (data.length > 0) setFormData(prev => ({ ...prev, sellerId: prev.sellerId || data[0]._id }));
+      });
+    }
   }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -47,6 +52,12 @@ export const AdminProductCreatePage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError('');
+    if (user?.role === 'admin' && !formData.sellerId) {
+      setError('Por favor selecione o artesão / vendedor proprietário do artigo.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const payload = {
         ...formData, price: Number(formData.price), physicalPrintPrice: Number(formData.physicalPrintPrice) || 0,
@@ -63,13 +74,36 @@ export const AdminProductCreatePage: React.FC = () => {
         <Button variant="outline" size="sm" onClick={() => navigate('/admin/produtos')} className="p-2"><ArrowLeft className="w-4 h-4" /></Button>
         <div>
           <h1 className="font-display text-3xl font-bold text-ink">Criar Novo Artigo</h1>
-          <p className="text-sm text-ink/70">Configure o tipo, preço, imagens e opções de impressão física</p>
+          <p className="text-sm text-ink/70">Configure o tipo, preço, artesão responsável e imagens</p>
         </div>
       </div>
 
       <Card>
-        {error && <div className="p-3 mb-4 rounded-2xl bg-red-50 text-red-700 text-xs">{error}</div>}
+        {error && <div className="p-3 mb-4 rounded-2xl bg-red-50 text-red-700 text-xs font-semibold">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Seletor Obrigatorio de Artesao para Administradores */}
+          {user?.role === 'admin' && (
+            <div className="flex flex-col gap-1.5 p-4 rounded-2xl bg-amber-50/70 border border-amber-200 shadow-sm">
+              <label className="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                <Store className="w-4 h-4 text-rose" /> Artesão / Banca Vendedora (Obrigatório para Admin)
+              </label>
+              <select
+                name="sellerId"
+                value={formData.sellerId}
+                onChange={handleChange}
+                className="h-11 px-4 rounded-xl border border-ink/15 text-sm bg-white font-bold text-ink focus:ring-2 focus:ring-rose outline-none"
+                required
+              >
+                <option value="">-- Selecione o Artesão / Vendedor --</option>
+                {sellers.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    {s.name} ({s.userId?.email || s.email || 'Sem e-mail'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <Input label="Título do Artigo" name="title" value={formData.title} onChange={handleChange} required placeholder="ex: Ilustração Digital Botânica" />
           <Input label="Slug / URL (auto-gerado)" name="slug" value={formData.slug} onChange={handleChange} required readOnly className="bg-cream/60" />
           <Input label="Materiais Utilizados (opcional)" name="materials" value={formData.materials} onChange={handleChange} placeholder="Pigmentos minerais, algodão..." />
