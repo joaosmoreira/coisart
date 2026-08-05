@@ -205,33 +205,35 @@ export const AdminProductsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 1. VISUALIZAÇÃO EM CARTÕES MOBILE (< md) */}
-              <div className="md:hidden divide-y divide-ink/10 bg-white">
+              {/* Grelha Responsiva de Cartões de Produtos (1 col no mobile, 2 col no tablet, 3 col no desktop) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-white">
                 {g.items.map((p) => {
                   const b = getBadge(p.type);
                   return (
-                    <div key={p._id} className="p-4 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <ProductImage src={p.images?.[0]} alt={p.title} className="w-14 h-14 rounded-2xl object-cover border border-ink/10 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-ink text-sm truncate">{p.title}</h4>
-                          <p className="text-xs text-ink/60">{p.categoryId?.name || 'Sem Categoria'}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant={b.variant}>{b.label}</Badge>
-                            <span className="text-xs font-semibold text-ink/70">{p.stock} un. em stock</span>
+                    <div key={p._id} className="p-4 rounded-3xl border border-ink/10 bg-cream/20 shadow-sm flex flex-col justify-between space-y-3 hover:border-rose/40 hover:shadow-md transition-all">
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <ProductImage src={p.images?.[0]} alt={p.title} className="w-16 h-16 rounded-2xl object-cover border border-ink/10 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-ink text-sm truncate">{p.title}</h4>
+                            <p className="text-xs text-ink/60">{p.categoryId?.name || 'Sem Categoria'}</p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <Badge variant={b.variant}>{b.label}</Badge>
+                              <span className="text-[11px] font-semibold text-ink/70">{p.stock} un. stock</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-ink/5">
-                        <span className="font-bold text-ink text-base">€{p.price.toFixed(2)}</span>
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between pt-3 border-t border-ink/10">
+                        <span className="font-bold text-ink text-lg">€{p.price.toFixed(2)}</span>
+                        <div className="flex items-center gap-1.5">
                           <Link to={`/admin/produtos/editar/${p._id}`}>
-                            <Button size="sm" variant="outline" className="h-8 text-xs gap-1">
+                            <Button size="sm" variant="outline" className="h-8 px-2.5 text-xs gap-1 font-bold rounded-xl">
                               <Edit className="w-3.5 h-3.5" /> Editar
                             </Button>
                           </Link>
-                          <Button size="sm" variant="outline" onClick={() => handleDelete(p._id)} className="h-8 text-xs text-red-500 hover:bg-red-50">
+                          <Button size="sm" variant="outline" onClick={() => handleDelete(p._id)} className="h-8 px-2.5 text-xs text-red-500 hover:bg-red-50 font-bold rounded-xl">
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -239,54 +241,6 @@ export const AdminProductsPage: React.FC = () => {
                     </div>
                   );
                 })}
-              </div>
-
-              {/* 2. VISUALIZAÇÃO EM TABELA DESKTOP / TABLET (>= md) */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left text-sm text-ink min-w-[600px]">
-                  <thead className="bg-white uppercase text-[10px] tracking-wider font-semibold text-ink/50 border-b border-ink/10">
-                    <tr>
-                      <th className="p-3 pl-4">Artigo</th>
-                      <th className="p-3">Tipo</th>
-                      <th className="p-3">Preço</th>
-                      <th className="p-3">Stock</th>
-                      <th className="p-3 text-right pr-4">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-ink/10 bg-white">
-                    {g.items.map((p) => {
-                      const b = getBadge(p.type);
-                      return (
-                        <tr key={p._id} className="hover:bg-cream/30 transition-colors">
-                          <td className="p-3 pl-4 flex items-center gap-3">
-                            <ProductImage src={p.images?.[0]} alt={p.title} className="w-10 h-10 rounded-xl object-cover border border-ink/10" />
-                            <div>
-                              <p className="font-semibold text-ink text-sm">{p.title}</p>
-                              <p className="text-[11px] text-ink/50">{p.categoryId?.name || 'Sem Categoria'}</p>
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            <Badge variant={b.variant}>{b.label}</Badge>
-                          </td>
-                          <td className="p-3 font-bold text-ink">€{p.price.toFixed(2)}</td>
-                          <td className="p-3 font-semibold text-xs">{p.stock} un.</td>
-                          <td className="p-3 pr-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <Link to={`/admin/produtos/editar/${p._id}`}>
-                                <Button size="sm" variant="outline" className="p-1.5">
-                                  <Edit className="w-3.5 h-3.5 text-ink/70" />
-                                </Button>
-                              </Link>
-                              <Button size="sm" variant="outline" onClick={() => handleDelete(p._id)} className="p-1.5 text-red-500 hover:bg-red-50">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
               </div>
             </Card>
           ))}
